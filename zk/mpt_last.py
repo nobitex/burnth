@@ -8,7 +8,14 @@ maxPrefixLen = maxBlocks * 136 - maxLowerLen
 
 
 def get_last_proof(
-    salt, burnPreimage, lowerLayerPrefix, nonce, balance, storageHash, codeHash
+    salt,
+    burnPreimage,
+    lowerLayerPrefix,
+    nonce,
+    balance,
+    storageHash,
+    codeHash,
+    encrypted,
 ):
     lowerLayerPrefixLen = len(lowerLayerPrefix)
     lowerLayerPrefix += (maxPrefixLen - len(lowerLayerPrefix)) * b"\x00"
@@ -24,6 +31,7 @@ def get_last_proof(
                 "codeHash": list(codeHash),
                 "lowerLayerPrefix": list(lowerLayerPrefix),
                 "lowerLayerPrefixLen": lowerLayerPrefixLen,
+                "encrypted": 1 if encrypted else 0,
             },
             f,
         )

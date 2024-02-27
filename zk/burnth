@@ -82,6 +82,7 @@ def get_proof_of_burn(burn_address: BurnAddress, salt, provider):
             proof.balance,
             proof.storageHash,
             proof.codeHash,
+            1 # Encrypted
         )
     )
 
