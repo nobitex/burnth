@@ -4,7 +4,7 @@ include "./utils/keccak/keccak.circom";
 include "./utils/substring_finder.circom";
 include "./utils/hasher.circom";
 include "./utils/padding.circom";
-include "./hashbytes.circom";
+include "./utils/hashbytes.circom";
 
 template KeccakLayerChecker(maxBlocks) {
 

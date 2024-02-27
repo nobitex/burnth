@@ -3,8 +3,8 @@ pragma circom 2.1.5;
 include "./utils/concat.circom";
 include "./utils/hasher.circom";
 include "./utils/keccak/keccak.circom";
-include "./hashbytes.circom";
-include "./rlp.circom";
+include "./utils/hashbytes.circom";
+include "./utils/rlp.circom";
 
 template HashAddress() {
     signal input address[20];

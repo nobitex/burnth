@@ -1,7 +1,7 @@
 pragma circom 2.1.5;
 
-include "./utils/utils.circom";
-include "./utils/concat.circom";
+include "./utils.circom";
+include "./concat.circom";
 
 
 template Rlp() {

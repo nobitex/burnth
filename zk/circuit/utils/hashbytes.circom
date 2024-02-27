@@ -1,6 +1,6 @@
 pragma circom 2.1.5;
 
-include "./utils/hasher.circom";
+include "./hasher.circom";
 
 template Bytes2Num(len, startIndex, nBytes) {
     signal input block[len];
