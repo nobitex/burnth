@@ -81,6 +81,12 @@ template MptLast(maxBlocks, maxLowerLen, security) {
     signal input salt;
 
     signal output commitUpper;
+    signal output encryptedBalance;
+
+    component balanceEnc = Hasher();
+    balanceEnc.left <== balance;
+    balanceEnc.right <== salt;
+    encryptedBalance <== balanceEnc.hash;
 
     component account_rlp_calculator = Rlp();
     account_rlp_calculator.nonce <== nonce;

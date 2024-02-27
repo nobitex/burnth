@@ -40,7 +40,6 @@ template KeccakLayerChecker(maxBlocks) {
 
     signal output commitUpper;
     signal output commitLower;
-    signal output result;
 
     // Commit to lowerLayer
     component hasherLower = HashBytes(maxBlocks * 136, 31);
@@ -74,7 +73,7 @@ template KeccakLayerChecker(maxBlocks) {
     checker.subInput <== keccakLowerLayer;
     checker.numBlocks <== numUpperLayerBlocks;
     checker.mainInput <== upperLayer;
-    result <== checker.out;
+    checker.out === 1;
  }
 
  component main = KeccakLayerChecker(4);

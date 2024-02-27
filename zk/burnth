@@ -1,0 +1,194 @@
+#!/usr/bin/python3
+
+from web3 import Web3
+import argparse
+import secrets
+from mimc7 import mimc7
+from field import Field
+import io
+import os
+import json
+from hashlib import sha256
+import rlp
+import mpt_last
+import mpt_path
+import spend
+
+
+class BurnAddress:
+    def __init__(self, preimage):
+        hashed = mimc7(preimage, preimage).val
+        bts = []
+        for _ in range(20):
+            bts.append(hashed % 256)
+            hashed = hashed // 256
+        self.preimage = preimage
+        self.address = Web3.to_checksum_address("0x" + bytes(bts).hex())
+
+
+class Wallet:
+    def __init__(self, entropy):
+        self.entropy = entropy
+
+    def open_or_create():
+        path = "burnth.priv"
+        if not os.path.isfile(path):
+            wallet = {"entropy": bytes([secrets.randbits(8) for _ in range(32)]).hex()}
+            with io.open(path, "w") as f:
+                json.dump(wallet, f)
+        with io.open(path, "r") as f:
+            return Wallet(bytes.fromhex(json.load(f)["entropy"]))
+
+    def derive_burn_addr(self, index: int) -> BurnAddress:
+        sha_input = self.entropy + index.to_bytes(8, "little")
+        preimage = Field(int.from_bytes(sha256(sha_input).digest()[:31], "little"))
+        return BurnAddress(preimage)
+
+
+SYMBOL = "BUTH"
+PROVIDER = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
+CHAIN_ID = 11155111
+
+
+def get_proof_of_burn(burn_address: BurnAddress, salt, provider):
+    w3 = Web3(Web3.HTTPProvider(provider))
+    num = w3.eth.get_block_number()
+    block = w3.eth.get_block(num)
+    proof = w3.eth.get_proof(burn_address.address, [], num)
+    for index, level in enumerate(proof.accountProof):
+        if index == 0:
+            if Web3.keccak(level) != block.stateRoot:
+                raise Exception("Not verified!")
+        if index >= 1:
+            if Web3.keccak(level) not in proof.accountProof[index - 1]:
+                raise Exception("Not verified!")
+            print(
+                "MIDDLE",
+                mpt_path.get_mpt_path_proof(salt, level, proof.accountProof[index - 1])
+            )
+    account_rlp = rlp.encode(
+        [proof.nonce, proof.balance, proof.storageHash, proof.codeHash]
+    )
+    prefix_account_rlp = proof.accountProof[-1][: -len(account_rlp)]
+    if Web3.keccak(prefix_account_rlp + account_rlp) not in proof.accountProof[-2]:
+        raise Exception("Not verified!")
+    print(
+        "LAST",
+        mpt_last.get_last_proof(
+            salt,
+            burn_address.preimage,
+            bytes(prefix_account_rlp),
+            proof.nonce,
+            proof.balance,
+            proof.storageHash,
+            proof.codeHash,
+        )
+    )
+
+    print(
+        "SPEND",
+        spend.get_spend_proof(
+            salt,
+            proof.balance,
+            10
+        )
+    )
+
+
+parser = argparse.ArgumentParser(
+    prog="burnth",
+    description="Mint and spend Burnth tokens!",
+    epilog="By Nobitex Labs - https://labs.nobitex.ir",
+)
+
+subparsers = parser.add_subparsers(help="Burnth", dest="command", required=True)
+
+parser_info = subparsers.add_parser(
+    "info", help="Information about your wallet!", allow_abbrev=False
+)
+
+parser_burn = subparsers.add_parser("burn", help="Burn ETH!", allow_abbrev=False)
+parser_burn.add_argument(
+    "--priv-src", type=str, help="Private key of the source account.", required=True
+)
+parser_burn.add_argument(
+    "--amount", type=float, help="Amount to be burnt.", required=True
+)
+
+parser_mint = subparsers.add_parser("mint", help=f"Mint {SYMBOL}!", allow_abbrev=False)
+parser_mint.add_argument(
+    "--priv-fee-payer",
+    type=str,
+    help="Private key of the account initiating mint transaction.",
+    required=True,
+)
+parser_mint.add_argument(
+    "--src-burn-addr",
+    type=str,
+    help="Address of the source account containing burnth ETH.",
+    required=True,
+)
+parser_mint.add_argument(
+    "--dst-addr",
+    type=str,
+    help="Address of the account receiving the {SYMBOL} tokens.",
+    required=True,
+)
+parser_mint.add_argument(
+    "--amount", type=float, help="Amount to be minted.", required=True
+)
+
+args = parser.parse_args()
+
+if args.command == "info":
+    w3 = Web3(Web3.HTTPProvider(PROVIDER))
+    wallet = Wallet.open_or_create()
+    print("Your top 10 burn-addresses:")
+    print()
+    for i in range(10):
+        burn_addr = wallet.derive_burn_addr(i).address
+        balance = w3.eth.get_balance(burn_addr)
+        eth = Web3.from_wei(balance, "ether")
+        print(f"#{i+1}: {burn_addr} ({eth} ETH)")
+elif args.command == "burn":
+    w3 = Web3(Web3.HTTPProvider(PROVIDER))
+    wallet = Wallet.open_or_create()
+    for i in range(10):
+        burn_addr = wallet.derive_burn_addr(i).address
+        balance = w3.eth.get_balance(burn_addr)
+        if balance == 0:
+            break
+    ans = input(
+        f"Burning {args.amount} ETH by sending them to {burn_addr}. Are you sure? (Y/n): "
+    )
+    if ans.lower() == "y":
+        gas_price = w3.eth.gas_price
+        amount_wei = Web3.to_wei(args.amount, "ether")
+        acc = w3.eth.account.from_key(args.priv_src)
+        transaction = {
+            "from": acc.address,
+            "to": burn_addr,
+            "value": amount_wei,
+            "nonce": w3.eth.get_transaction_count(acc.address),
+            "gas": 21000,
+            "maxFeePerGas": gas_price,
+            "maxPriorityFeePerGas": gas_price // 2,
+            "chainId": CHAIN_ID,
+        }
+        signed = w3.eth.account.sign_transaction(transaction, args.priv_src)
+        tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+        print("Waiting for the receipt...")
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        print("Receipt:", receipt)
+elif args.command == "mint":
+    w3 = Web3(Web3.HTTPProvider(PROVIDER))
+    wallet = Wallet.open_or_create()
+    burn_addr = None
+    for i in range(10):
+        if args.src_burn_addr == str(wallet.derive_burn_addr(i).address):
+            burn_addr = wallet.derive_burn_addr(i)
+            break
+    if burn_addr:
+        get_proof_of_burn(burn_addr, 123, PROVIDER)
+    else:
+        raise Exception("Burn address not found!")

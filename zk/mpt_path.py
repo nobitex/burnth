@@ -26,4 +26,4 @@ def get_mpt_path_proof(salt, lower, upper):
         "cd circuit/mpt_path_cpp && ./mpt_path ../input.json ../mpt_path_witness.wtns"
     )
     with io.open("circuit/mpt_path_cpp/output.json", "r") as f:
-        return f.read()
+        return [int(s) for s in json.loads(f.read())]
