@@ -144,13 +144,18 @@ args = parser.parse_args()
 if args.command == "info":
     w3 = Web3(Web3.HTTPProvider(PROVIDER))
     wallet = Wallet.open_or_create()
-    print("Your top 10 burn-addresses:")
+    print("Your burn-addresses:")
     print()
-    for i in range(10):
+    i = 0
+    while True:
         burn_addr = wallet.derive_burn_addr(i).address
         balance = w3.eth.get_balance(burn_addr)
         eth = Web3.from_wei(balance, "ether")
-        print(f"#{i+1}: {burn_addr} ({eth} ETH)")
+        if eth == 0:
+            break
+        else:
+            print(f"#{i+1}: {burn_addr} ({eth} ETH)")
+            i += 1
 elif args.command == "burn":
     w3 = Web3(Web3.HTTPProvider(PROVIDER))
     wallet = Wallet.open_or_create()
