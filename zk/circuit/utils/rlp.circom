@@ -35,8 +35,10 @@ template Rlp() {
     reverseNonce.bytes <== bdNonce.bytes;
     reverseNonce.realByteLen <== byteln.len;
     
+    component nonceIsSingleByteChecker = IsZero();
+    nonceIsSingleByteChecker.in <== byteln.len * (1 - byteln.len);
     signal nonceIsSingleByte;
-    nonceIsSingleByte <-- (nonce < 0x80) ? 1 : 0;
+    nonceIsSingleByte <== nonceIsSingleByteChecker.out;
 
     signal nonceRlpLenCalc;
     nonceRlpLenCalc <== (1 - nonceIsSingleByte) + byteln.len;
@@ -72,8 +74,10 @@ template Rlp() {
     reverseBalance.realByteLen <== bytelb.len;
 
  
+    component balanceIsSingleByteChecker = IsZero();
+    balanceIsSingleByteChecker.in <== bytelb.len * (1 - bytelb.len);
     signal balanceIsSingleByte;
-    balanceIsSingleByte <-- (balance < 0x80) ? 1 : 0;
+    balanceIsSingleByte <== balanceIsSingleByteChecker.out;
 
     signal balanceRlpLenCalc;
     balanceRlpLenCalc <== (1 - balanceIsSingleByte) + bytelb.len;
