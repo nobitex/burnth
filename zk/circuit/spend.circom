@@ -1,6 +1,7 @@
 pragma circom 2.1.5;
 
 include "./utils/hasher.circom";
+include "./utils/utils.circom";
 
 template Spend() {
     signal input balance;
@@ -14,6 +15,11 @@ template Spend() {
 
     signal input withdrawnBalance;
     signal output remainingCoin;
+
+    component sufficientBalanceChecker = GreaterEqThan(252);
+    sufficientBalanceChecker.in[0] <== balance;
+    sufficientBalanceChecker.in[1] <== withdrawnBalance;
+    sufficientBalanceChecker.out === 1;
 
     component remainingCoinHasher = Hasher();
     remainingCoinHasher.left <== balance - withdrawnBalance;
