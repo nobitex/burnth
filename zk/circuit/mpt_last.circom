@@ -83,6 +83,12 @@ template MptLast(maxBlocks, maxLowerLen, security) {
 
     signal output commitUpper;
     signal output encryptedBalance;
+    signal output nullifier;
+
+    component nullifier_calc = Hasher();
+    nullifier_calc.left <== burn_preimage;
+    nullifier_calc.right <== 0;
+    nullifier <== nullifier_calc.hash;
 
     encrypted * (1 - encrypted) === 0;
 

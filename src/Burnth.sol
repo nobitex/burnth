@@ -44,21 +44,31 @@ contract Burnth is IERC20 {
 
     struct PrivateProofOfBurn {
         uint blockNumber; // Argument on blockRoot of which block?
-        uint coin; // Coin is stealth version of balance: hash(balance, salt)
+        uint coin; // Coin is stealth version of balance (If `isEncrypted`): hash(balance, salt)
+        uint nullifier; // Nullifier is based on the preimage: nullifier = mimc7(preimage, 0)
         uint[] layers;
         Groth16Proof firstProof;
         Groth16Proof[] midProofs;
         Groth16Proof lastProof;
+        bool isEncrypted; // true if `coin` == hash(balance, salt). false if `coin` == `balance`
+        address target; // Target address will get the minted tokens.
     }
 
+    mapping(uint => bool) public nullifiers;
     mapping(uint => bool) public coins;
 
-    function mintStealth(PrivateProofOfBurn calldata proof) external {
-        // Verify the proof and create a new coin: coins[proof.coin] = true;
-        // bytes32 blockhash = blockhash(proof.blockNumber);
-        // MptFirst public inputs: [blockhash, layers[0]]
-        // MptPaths public inputs: [layers[i], layers[i+1]]
-        // MptLast public inputs: [layers[-1], coin]
+    function mint(PrivateProofOfBurn calldata proof) external {
+        // Check if nullifiers[proof.nullifier] == false
+        // Verify the proof given public inputs:
+        //  - bytes32 blockhash = blockhash(proof.blockNumber);
+        //  - MptFirst public inputs: [blockhash, layers[0]]
+        //  - MptPaths public inputs: [layers[i], layers[i+1]]
+        //  - MptLast public inputs: [layers[-1], coin, nullifier, isEncrypted]
+        // If isEncrypted
+        //   - Create a new encrypted coin: coins[proof.coin] = true;
+        // Else
+        //   - Mint `proof.coin` amount of coins and transfer to `target`
+        
     }
 
     // signal input balance;
@@ -69,7 +79,7 @@ contract Burnth is IERC20 {
     // signal output remainingCoin;
     // remainingCoin <== hash(balance - withdrawnBalance, salt)
     // (withdrawnBalance should also be public)
-    function mint(uint256 coin, uint256 remainingCoin, uint256 withdrawnBalance, address destination) external {
+    function spend(uint256 coin, uint256 remainingCoin, uint256 withdrawnBalance, address destination) external {
         // Check if coins[coin] is true
 
         // Falsify the coin: coins[coin] = false;
