@@ -56,6 +56,9 @@ contract Burnth is IERC20 {
     function mintStealth(PrivateProofOfBurn calldata proof) external {
         // Verify the proof and create a new coin: coins[proof.coin] = true;
         // bytes32 blockhash = blockhash(proof.blockNumber);
+        // MptFirst public inputs: [blockhash, layers[0]]
+        // MptPaths public inputs: [layers[i], layers[i+1]]
+        // MptLast public inputs: [layers[-1], coin]
     }
 
     // signal input balance;
@@ -72,6 +75,8 @@ contract Burnth is IERC20 {
         // Falsify the coin: coins[coin] = false;
 
         // A ZK proof should check validity (Public input: [coin, withdrawnBalance, remainingCoin])
+
+        // Add remaining coin: coins[remainingCoin] = true;
         
         // If everything is ok: 
         // balanceOf[msg.sender] += withdrawnBalance;
