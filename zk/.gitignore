@@ -1,0 +1,7 @@
+circuit/*_cpp
+circuit/*_js
+circuit/*.json
+circuit/*.r1cs
+circuit/*.sym
+circuit/*.zkey
+circuit/*.wtns
