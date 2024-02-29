@@ -1,34 +1,30 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
 contract Burnth is IERC20 {
-    uint public totalSupply;
-    mapping(address => uint) public balanceOf;
-    mapping(address => mapping(address => uint)) public allowance;
+    uint256 public totalSupply;
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
     string public name = "Burnth";
     string public symbol = "BUTH";
     uint8 public decimals = 18;
 
-    function transfer(address recipient, uint amount) external returns (bool) {
+    function transfer(address recipient, uint256 amount) external returns (bool) {
         balanceOf[msg.sender] -= amount;
         balanceOf[recipient] += amount;
         emit Transfer(msg.sender, recipient, amount);
         return true;
     }
 
-    function approve(address spender, uint amount) external returns (bool) {
+    function approve(address spender, uint256 amount) external returns (bool) {
         allowance[msg.sender][spender] = amount;
         emit Approval(msg.sender, spender, amount);
         return true;
     }
 
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint amount
-    ) external returns (bool) {
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
         allowance[sender][msg.sender] -= amount;
         balanceOf[sender] -= amount;
         balanceOf[recipient] += amount;
@@ -37,16 +33,16 @@ contract Burnth is IERC20 {
     }
 
     struct Groth16Proof {
-        uint[2] a;
-        uint[2][2] b;
-        uint[2] c;
+        uint256[2] a;
+        uint256[2][2] b;
+        uint256[2] c;
     }
 
     struct PrivateProofOfBurn {
-        uint blockNumber; // Argument on blockRoot of which block?
-        uint coin; // Coin is stealth version of balance (If `isEncrypted`): hash(balance, salt)
-        uint nullifier; // Nullifier is based on the preimage: nullifier = mimc7(preimage, 0)
-        uint[] layers;
+        uint256 blockNumber; // Argument on blockRoot of which block?
+        uint256 coin; // Coin is stealth version of balance (If `isEncrypted`): hash(balance, salt)
+        uint256 nullifier; // Nullifier is based on the preimage: nullifier = mimc7(preimage, 0)
+        uint256[] layers;
         Groth16Proof firstProof;
         Groth16Proof[] midProofs;
         Groth16Proof lastProof;
@@ -54,8 +50,8 @@ contract Burnth is IERC20 {
         address target; // Target address will get the minted tokens.
     }
 
-    mapping(uint => bool) public nullifiers;
-    mapping(uint => bool) public coins;
+    mapping(uint256 => bool) public nullifiers;
+    mapping(uint256 => bool) public coins;
 
     function mint(PrivateProofOfBurn calldata proof) external {
         // Check if nullifiers[proof.nullifier] == false
@@ -68,7 +64,6 @@ contract Burnth is IERC20 {
         //   - Create a new encrypted coin: coins[proof.coin] = true;
         // Else
         //   - Mint `proof.coin` amount of coins and transfer to `target`
-        
     }
 
     // signal input balance;
@@ -87,8 +82,8 @@ contract Burnth is IERC20 {
         // A ZK proof should check validity (Public input: [coin, withdrawnBalance, remainingCoin])
 
         // Add remaining coin: coins[remainingCoin] = true;
-        
-        // If everything is ok: 
+
+        // If everything is ok:
         // balanceOf[msg.sender] += withdrawnBalance;
         // totalSupply += withdrawnBalance;
         // emit Transfer(address(0), msg.sender, withdrawnBalance);
