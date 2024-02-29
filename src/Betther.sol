@@ -35,8 +35,8 @@ contract Betther is IERC20 {
     IERC20 burnth_contract;
     uint256 starting_block;
 
-    constructor(address _burnth_addr) {
-        burnth_contract = IERC20(_burnth_addr);
+    constructor(IERC20 _burnth_addr) {
+        burnth_contract = _burnth_addr;
         starting_block = block.number;
         rewards[0] = 50_000_000_000;
     }
@@ -51,14 +51,14 @@ contract Betther is IERC20 {
         return (block.number - starting_block) / BLOCK_PER_EPOCH;
     }
 
-    function rewardOf(uint256 _epoch) internal returns (uint256) {
+    function rewardOf(uint256 _epoch) public returns (uint256) {
         uint256 i = _epoch;
         while (rewards[i] == 0) {
             i -= 1;
         }
         i += 1;
         while (i <= _epoch) {
-            rewards[i] = rewards[i - 1] - rewards[i - 1] / 100000000;
+            rewards[i] = rewards[i - 1] - rewards[i - 1] / 10000000000;
             i += 1;
         }
 
