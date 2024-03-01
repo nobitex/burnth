@@ -13,4 +13,17 @@ docs/
 # Dotenv file
 .env
 
-__pycache__/
+burnth.priv
+
+*__pycache__*
+
+*.ptau
+*.r1cs
+*.sym
+circuit/*.json
+circuit/mpt_first_*
+circuit/mpt_path_*
+circuit/mpt_last_*
+
+Mpt*.sol
+SpendVerifier.sol
