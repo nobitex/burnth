@@ -1,4 +1,6 @@
-import json, io
+import json, io, ast
+from field import Field
+from mimc7 import mimc7
 import os
 
 security = 20
@@ -8,37 +10,37 @@ maxPrefixLen = maxBlocks * 136 - maxLowerLen
 
 
 def get_last_proof(
-    salt,
-    burnPreimage,
-    lowerLayerPrefix,
-    nonce,
-    balance,
-    storageHash,
-    codeHash,
-    encrypted,
+    salt, encrypted, lowerLayerPrefix, nonce, balance, storageHash, codeHash, burnPreimage
 ):
     lowerLayerPrefixLen = len(lowerLayerPrefix)
     lowerLayerPrefix += (maxPrefixLen - len(lowerLayerPrefix)) * b"\x00"
 
-    with io.open("circuit/input.json", "w") as f:
+    with io.open("/tmp/input_mpt_last.json", "w") as f:
         json.dump(
             {
                 "salt": salt,
-                "burn_preimage": str(burnPreimage),
-                "nonce": str(nonce),
-                "balance": str(balance),
+                "encrypted": 1 if encrypted else 0,
+                "nonce": int(nonce),
+                "balance": int(balance),
                 "storageHash": list(storageHash),
                 "codeHash": list(codeHash),
                 "lowerLayerPrefix": list(lowerLayerPrefix),
                 "lowerLayerPrefixLen": lowerLayerPrefixLen,
-                "encrypted": 1 if encrypted else 0,
+                "burn_preimage": burnPreimage,
             },
             f,
         )
 
     os.system(
-        "cd circuit/mpt_last_cpp && ./mpt_last ../input.json ../mpt_last_witness.wtns"
+        "cd zk && make gen_mpt_last_witness && make gen_mpt_last_proof"
     )
 
-    with io.open("circuit/mpt_last_cpp/output.json", "r") as f:
-        return [int(s) for s in json.loads(f.read())]
+    proof = open("/tmp/mpt_last_proof.json", "r").read()
+    proof = ast.literal_eval(proof)    
+    proof = [
+        [Field(int(s, 16)).val for s in proof[0]],
+        [[Field(int(s, 16)).val for s in p] for p in proof[1]],
+        [Field(int(s, 16)).val for s in proof[2]],
+    ]
+        
+    return proof
