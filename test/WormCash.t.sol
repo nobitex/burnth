@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {Betther} from "../src/Betther.sol";
+import {WormCash} from "../src/WormCash.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
 contract SimpleToken is IERC20 {
@@ -35,20 +35,20 @@ contract SimpleToken is IERC20 {
     }
 }
 
-contract BettherTest is Test {
-    Betther public betther;
+contract WormCashTest is Test {
+    WormCash public worm_cash;
 
     function setUp() public {
         IERC20 token = IERC20(new SimpleToken());
-        betther = new Betther(token);
+        worm_cash = new WormCash(token);
     }
 
     function test_reward() public {
-        assertEq(betther.rewardOf(0), 50_000_000_000);
-        assertEq(betther.rewardOf(0), 50_000_000_000);
-        assertEq(betther.rewardOf(1), 49_999_999_995);
-        assertEq(betther.rewardOf(1), 49_999_999_995);
-        assertEq(betther.rewardOf(10), 49_999_999_959);
-        assertEq(betther.rewardOf(2), 49_999_999_991);
+        assertEq(worm_cash.rewardOf(0), 50_000_000_000);
+        assertEq(worm_cash.rewardOf(0), 50_000_000_000);
+        assertEq(worm_cash.rewardOf(1), 49_999_999_995);
+        assertEq(worm_cash.rewardOf(1), 49_999_999_995);
+        assertEq(worm_cash.rewardOf(10), 49_999_999_959);
+        assertEq(worm_cash.rewardOf(2), 49_999_999_991);
     }
 }

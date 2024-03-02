@@ -3,11 +3,11 @@ pragma solidity ^0.8.13;
 
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
-contract Betther is IERC20 {
+contract WormCash is IERC20 {
     uint256 public totalSupply;
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
-    string public name = "Betther";
+    string public name = "WormCash";
     string public symbol = "BETH";
     uint8 public decimals = 18;
 
