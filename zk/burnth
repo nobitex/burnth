@@ -16,7 +16,7 @@ import mpt_path
 import spend
 
 
-CONTRACT_ADDRESS = "0x3acc15dE35aaB8A94B7D2426E27c887541e4DE6c"
+CONTRACT_ADDRESS = "0x42D4BA5e542d9FeD87EA657f0295F1968A61c00A"
 SYMBOL = "BUTH"
 # PROVIDER = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
 # CHAIN_ID = 11155111
@@ -68,9 +68,11 @@ def get_proof_of_burn(burn_address: BurnAddress, salt, encrypted, provider, bloc
     if Web3.keccak(prefix_account_rlp + account_rlp) not in proof.accountProof[-2]:
         raise Exception("Not verified!")
 
+    layers = []
+
     first_proof = mpt_first.get_mpt_first_proof(block)
 
-    last_proof = mpt_last.get_last_proof(
+    last_proof, last_proof_upper_commit = mpt_last.get_last_proof(
         salt,
         encrypted,
         bytes(prefix_account_rlp),
@@ -80,49 +82,22 @@ def get_proof_of_burn(burn_address: BurnAddress, salt, encrypted, provider, bloc
         proof.codeHash,
         burn_address.preimage.val
     )
+    layers.append(last_proof_upper_commit)
 
-    return first_proof, [], last_proof
+    path_proofs = []
+    rev_proof = proof.accountProof[::-1]
+    for index, level in enumerate(rev_proof):
+        if index == len(rev_proof) - 1:
+            if Web3.keccak(level) != block.stateRoot:
+                raise Exception("Not verified!")
+        else:
+            if Web3.keccak(level) not in rev_proof[index + 1]:
+                raise Exception("Not verified!")
+            mpt_path_proof, mpt_path_upper_commit = mpt_path.get_mpt_path_proof(salt, level, rev_proof[index + 1])
+            path_proofs.append(mpt_path_proof)
+            layers.append(mpt_path_upper_commit)
 
-    # for index, level in enumerate(proof.accountProof):
-    #     if index == 0:
-    #         if Web3.keccak(level) != block.stateRoot:
-    #             raise Exception("Not verified!")
-    #     if index >= 1:
-    #         if Web3.keccak(level) not in proof.accountProof[index - 1]:
-    #             raise Exception("Not verified!")
-    #         print(
-    #             "MIDDLE",
-    #             mpt_path.get_mpt_path_proof(salt, level, proof.accountProof[index - 1])
-    #         )
-    # account_rlp = rlp.encode(
-    #     [proof.nonce, proof.balance, proof.storageHash, proof.codeHash]
-    # )
-    # prefix_account_rlp = proof.accountProof[-1][: -len(account_rlp)]
-    # if Web3.keccak(prefix_account_rlp + account_rlp) not in proof.accountProof[-2]:
-    #     raise Exception("Not verified!")
-    # print(
-    #     "LAST",
-    #     mpt_last.get_last_proof(
-    #         salt,
-    #         burn_address.preimage,
-    #         bytes(prefix_account_rlp),
-    #         proof.nonce,
-    #         proof.balance,
-    #         proof.storageHash,
-    #         proof.codeHash,
-    #         1 # Encrypted
-    #     )
-    # )
-
-    # print(
-    #     "SPEND",
-    #     spend.get_spend_proof(
-    #         salt,
-    #         proof.balance,
-    #         10
-    #     )
-    # )
-
+    return layers, first_proof, path_proofs, last_proof
 
 parser = argparse.ArgumentParser(
     prog="burnth",
@@ -262,8 +237,7 @@ elif args.command == "mint":
     nullifier = mimc7(burn_addr.preimage, Field(0)).val
     layers = []
 
-    (first_proof, mid_proofs, last_proof) = get_proof_of_burn(burn_addr, SALT, is_encrypted ,PROVIDER, block_number)
-    mid_proofs = []
+    (layers, first_proof, mid_proofs, last_proof) = get_proof_of_burn(burn_addr, SALT, is_encrypted ,PROVIDER, block_number)
 
     target = args.dst_addr
 
@@ -307,12 +281,6 @@ elif args.command == "spend":
     remaining_balance = coin_balance - widthdrawn_amount
     remaining_coin = mimc7(Field(remaining_balance), Field(SALT)).val
     proof = spend.get_spend_proof(SALT, coin_balance, widthdrawn_amount)
-
-        # uint256 coin,
-        # uint256 remainingCoin,
-        # uint256 withdrawnBalance, 
-        # address destination,
-        # Groth16Proof calldata proof
 
     contract_feed = [
         coin,
