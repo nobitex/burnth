@@ -49,7 +49,7 @@ gen_mpt_path_witness:
 
 gen_mpt_path_proof:
 	cd circuit && snarkjs groth16 prove mpt_path_0001.zkey mpt_path_witness.wtns mpt_path_proof.json mpt_path_public.json
-	mv circuit/mpt_path_public.json /tmp/mpt_path_public.json
+	snarkjs generatecall circuit/mpt_path_public.json circuit/mpt_path_proof.json > /tmp/mpt_path_proof.json 
 
 gen_mpt_path_solidity: mpt_path_zkey
 	cd circuit && snarkjs zkey export solidityverifier mpt_path_0001.zkey ../../src/MptMiddleVerifier.sol
@@ -113,5 +113,4 @@ clean:
 clean_all: clean
 	rm -rf circuit/*.zkey
 
-install: clean gen_mpt_first_solidity gen_mpt_last_solidity gen_spend_solidity
-# install: clean gen_mpt_first_solidity gen_mpt_path_solidity gen_mpt_last_solidity
+install: clean gen_mpt_first_solidity gen_mpt_path_solidity gen_mpt_last_solidity gen_spend_solidity

@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import "./MptFirstVerifier.sol";
+import "./MptMiddleVerifier.sol";
 import "./MptLastVerifier.sol";
 import "./SpendVerifier.sol";
 import "./Console.sol";
@@ -24,19 +25,20 @@ contract Burnth is IERC20 {
     }
 
     struct PrivateProofOfBurn {
-        uint256 blockNumber; // Argument on blockRoot of which block?
-        uint256 coin; // Coin is stealth version of balance (If `isEncrypted`): hash(balance, salt)
-        uint256 nullifier; // Nullifier is based on the preimage: nullifier = mimc7(preimage, 0)
+        uint256 blockNumber;
+        uint256 coin;
+        uint256 nullifier;
         uint256[] layers;
         Groth16Proof firstProof;
         Groth16Proof[] midProofs;
         Groth16Proof lastProof;
-        bool isEncrypted; // true if `coin` == hash(balance, salt). false if `coin` == `balance`
-        address target; // Target address will get the minted tokens.
+        bool isEncrypted;
+        address target;
     }
 
     SpendVerifier spend_verifier = new SpendVerifier();
     MptLastVerifier mpt_last_verifier = new MptLastVerifier();
+    MptMiddleVerifier mpt_middle_verifier = new MptMiddleVerifier();
     MptFirstVerifier mpt_first_verifier = new MptFirstVerifier();
     mapping(uint256 => bool) public nullifiers;
     mapping(uint256 => bool) public coins;
@@ -79,28 +81,24 @@ contract Burnth is IERC20 {
             [block_hash]
         ), "MptFirstVerifier: invalid proof");
 
-        // TODO: fix last layer verifier
-        // require(mpt_last_verifier.verifyProof(
-        //     proof.lastProof.a,
-        //     proof.lastProof.b,
-        //     proof.lastProof.c,
-        //     [, proof.coin, proof.nullifier, is_encrypted]
-        // ), "MptLastVerifier: invalid proof");
+        for (uint256 i = 0; i < proof.layers.length - 1; i++) {
+            require(mpt_middle_verifier.verifyProof(
+                proof.midProofs[i].a,
+                proof.midProofs[i].b,
+                proof.midProofs[i].c,
+                [proof.layers[i + 1], proof.layers[i]]
+            ), "MptMiddleVerifier: invalid proof");
+        }
+
+        require(mpt_last_verifier.verifyProof(
+            proof.lastProof.a,
+            proof.lastProof.b,
+            proof.lastProof.c,
+            [proof.layers[0], proof.coin, proof.nullifier, is_encrypted]
+        ), "MptLastVerifier: invalid proof");
     }
 
     function mint(PrivateProofOfBurn calldata proof) external {
-        // Check if nullifiers[proof.nullifier] == false
-        // Verify the proof given public inputs:
-        //  - bytes32 blockhash = blockhash(proof.blockNumber);
-        //  - MptFirst public inputs: [blockhash, layers[0]]
-        //  - MptPaths public inputs: [layers[i], layers[i+1]]
-        //  - MptLast public inputs: [layers[-1], coin, nullifier, isEncrypted]
-        // If isEncrypted
-        //   - Create a new encrypted coin: coins[proof.coin] = true;
-        // Else
-        //   - Mint `proof.coin` amount of coins and transfer to `target`
-
-        // verify proof
         verify_proof(proof);
 
         if (proof.isEncrypted) {

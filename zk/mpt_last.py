@@ -18,7 +18,7 @@ def get_last_proof(
     with io.open("/tmp/input_mpt_last.json", "w") as f:
         json.dump(
             {
-                "salt": salt,
+                "salt": str(salt),
                 "encrypted": 1 if encrypted else 0,
                 "nonce": int(nonce),
                 "balance": int(balance),
@@ -26,7 +26,7 @@ def get_last_proof(
                 "codeHash": list(codeHash),
                 "lowerLayerPrefix": list(lowerLayerPrefix),
                 "lowerLayerPrefixLen": lowerLayerPrefixLen,
-                "burn_preimage": burnPreimage,
+                "burn_preimage": str(burnPreimage),
             },
             f,
         )
@@ -42,5 +42,8 @@ def get_last_proof(
         [[Field(int(s, 16)).val for s in p] for p in proof[1]],
         [Field(int(s, 16)).val for s in proof[2]],
     ]
-        
-    return proof
+
+    output = open("/tmp/output_mpt_last.json", "r").read()
+    output = ast.literal_eval(output)
+
+    return proof, int(output[0])
