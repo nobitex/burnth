@@ -1,22 +1,23 @@
 #!/usr/bin/python3
-
-from web3 import Web3
 import argparse
 import secrets
-from mimc7 import mimc7
-from field import Field, FIELD_SIZE
 import io
 import os
 import json
 from hashlib import sha256
+
+from web3 import Web3
 import rlp
-import mpt_last
-import mpt_path
-import spend
+
+from zk import mpt_last
+from zk import mpt_path
+from zk import spend
+from zk.mimc7 import mimc7
+from zk.field import Field
 
 
 CONTRACT_ADDRESS = "0x7Bc058E7b9221CAc6258Ec21Ab09a73a1BEfe3e2"
-SYMBOL = "BUTH"
+SYMBOL = "BURNTH"
 PROVIDER = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
 CHAIN_ID = 11155111
 # PROVIDER = "http://127.0.0.1:8545"
