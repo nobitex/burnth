@@ -37,4 +37,5 @@ You'll find a Python script `burnth` in the repo, which can be used for burning 
 ## License
 
 The project is licensed under GPL v3.
+
 The keccak circuits are implemented by https://github.com/vocdoni and licensed under GPL v3. Check: https://github.com/vocdoni/keccak256-circom/blob/master/LICENSE
