@@ -32,3 +32,9 @@ You'll find a Python script `burnth` in the repo, which can be used for burning 
 3. Mint your BURNTH: `burnth burn --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --amount [AMOUNT TO BE MINTED]`.
    It's important to use a different account for paying the minting gas fees, otherwise, the burner's identity would be revealed.
 4. Congrats! Your BURNTH should now be in your wallet!
+
+
+## License
+
+The project is licensed under GPL v3.
+The keccak circuits are implemented by https://github.com/vocdoni and licensed under GPL v3. Check: https://github.com/vocdoni/keccak256-circom/blob/master/LICENSE
