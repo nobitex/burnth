@@ -14,10 +14,11 @@ from zk import mpt_path
 from zk import spend
 from zk.mimc7 import mimc7
 from zk.field import Field
+from hexbytes.main import HexBytes
 
 
-CONTRACT_ADDRESS = "0x7Bc058E7b9221CAc6258Ec21Ab09a73a1BEfe3e2"
-SYMBOL = "BURNTH"
+CONTRACT_ADDRESS = "0xa1440a8B8b53a9e24fecC173d8C3821e870878A5"
+SYMBOL = "BUTH"
 PROVIDER = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
 CHAIN_ID = 11155111
 # PROVIDER = "http://127.0.0.1:8545"
@@ -71,12 +72,30 @@ def get_block_splited_information(block):
         hex(block.timestamp),
         block.extraData.hex(),
         block.mixHash.hex(),
-        block.nonce.hex(),
-        hex(block.baseFeePerGas),
-        block.withdrawalsRoot.hex(),
+        block.nonce.hex()
     ]
+
+    optional_headers = [
+        "baseFeePerGas",
+        "withdrawalsRoot",
+        "blobGasUsed",
+        "excessBlobGas",
+        "parentBeaconBlockRoot"
+    ]
+
+    for header in optional_headers:
+        if hasattr(block, header):
+            v = getattr(block, header)
+            if isinstance(v, HexBytes):
+                hashes.append(v.hex())
+            elif isinstance(v, int):
+                hashes.append(hex(v))
+            else:
+                hashes.append(v)
+
     hashes = ["0x" if h == "0x0" else h for h in hashes]
     header = rlp.encode([Web3.to_bytes(hexstr=h) for h in hashes])
+    assert(Web3.keccak(header) == block.hash)
 
     start_idx = header.index(bytes(block.stateRoot))
     end_idx = start_idx + len(bytes(block.stateRoot))
@@ -267,8 +286,8 @@ elif args.command == "mint":
     block = w3.eth.get_block(block_number)
     proof = w3.eth.get_proof(burn_addr.address, [], block_number)
 
-    (layers, root_proof, mid_proofs, last_proof) = get_proof_of_burn(burn_addr, SALT, is_encrypted, block, proof)
     (prefix, state_root, postfix) = get_block_splited_information(block)
+    (layers, root_proof, mid_proofs, last_proof) = get_proof_of_burn(burn_addr, SALT, is_encrypted, block, proof)
 
     target = args.dst_addr
 
