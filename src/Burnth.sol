@@ -1,19 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {IERC20} from "forge-std/interfaces/IERC20.sol";
+import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "./MptMiddleVerifier.sol";
 import "./MptLastVerifier.sol";
 import "./SpendVerifier.sol";
 import "./Console.sol";
 
-contract Burnth is IERC20 {
-    uint256 public totalSupply;
-    mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
-    string public name = "Burnth";
-    string public symbol = "BUTH";
-    uint8 public decimals = 18;
+contract Burnth is ERC20 {
 
     uint256 constant FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     
@@ -47,26 +41,7 @@ contract Burnth is IERC20 {
     event CoinGenerated(address recipient, uint256 coin);
     event CoinSpent(address spender, uint256 coin, uint256 remainingCoin, uint256 withdrawnBalance, address destination);
 
-    function transfer(address recipient, uint256 amount) external returns (bool) {
-        balanceOf[msg.sender] -= amount;
-        balanceOf[recipient] += amount;
-        emit Transfer(msg.sender, recipient, amount);
-        return true;
-    }
-
-    function approve(address spender, uint256 amount) external returns (bool) {
-        allowance[msg.sender][spender] = amount;
-        emit Approval(msg.sender, spender, amount);
-        return true;
-    }
-
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
-        allowance[sender][msg.sender] -= amount;
-        balanceOf[sender] -= amount;
-        balanceOf[recipient] += amount;
-        emit Transfer(sender, recipient, amount);
-        return true;
-    }
+    constructor() ERC20("Burnth", "BURNTH") {}
 
     function verify_proof(PrivateProofOfBurn calldata proof) internal {
         uint256 is_encrypted = proof.isEncrypted ? 1 : 0;
@@ -81,7 +56,7 @@ contract Burnth is IERC20 {
             proof.rootProof.a,
             proof.rootProof.b,
             proof.rootProof.c,
-            [uint256(bytes32(proof.state_root)) % FIELD_SIZE, proof.layers[proof.layers.length - 1], uint256(1)]
+            [uint256(bytes32(proof.state_root)) % FIELD_SIZE, proof.layers[proof.layers.length - 1]]
         ), "MptRootVerifier: invalid proof");
 
 
@@ -90,7 +65,7 @@ contract Burnth is IERC20 {
                 proof.midProofs[i].a,
                 proof.midProofs[i].b,
                 proof.midProofs[i].c,
-                [proof.layers[i + 1], proof.layers[i], uint256(0)]
+                [proof.layers[i + 1], proof.layers[i]]
             ), "MptMiddleVerifier: invalid proof");
         }
 
@@ -109,9 +84,7 @@ contract Burnth is IERC20 {
             coins[proof.coin] = true;
             emit CoinGenerated(proof.target, proof.coin);
         } else {
-            balanceOf[proof.target] += proof.coin;
-            totalSupply += proof.coin;
-            emit Transfer(address(0), proof.target, proof.coin);
+            _mint(proof.target, proof.coin);
         }
     }
 
@@ -133,11 +106,9 @@ contract Burnth is IERC20 {
         ), "SpendVerifier: invalid proof");
 
         coins[remainingCoin] = true;
-        balanceOf[destination] += withdrawnBalance;
-        totalSupply += withdrawnBalance;
+        _mint(destination, withdrawnBalance);
 
         emit CoinSpent(msg.sender, coin, remainingCoin, withdrawnBalance, destination);
         emit CoinGenerated(destination, remainingCoin);
-        emit Transfer(address(0), destination, withdrawnBalance);
     }
 }

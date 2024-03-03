@@ -15,12 +15,12 @@ import mpt_path
 import spend
 
 
-CONTRACT_ADDRESS = "0xDe2f00CCfEefAdD1Ecc87BE765cf46AC901A6AC8"
+CONTRACT_ADDRESS = "0x7Bc058E7b9221CAc6258Ec21Ab09a73a1BEfe3e2"
 SYMBOL = "BUTH"
-# PROVIDER = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
-# CHAIN_ID = 11155111
-PROVIDER = "http://127.0.0.1:8545"
-CHAIN_ID = 1337
+PROVIDER = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
+CHAIN_ID = 11155111
+# PROVIDER = "http://127.0.0.1:8545"
+# CHAIN_ID = 1337
 
 SALT = 1234
 
