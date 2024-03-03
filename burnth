@@ -248,7 +248,7 @@ elif args.command == "mint":
     for i in range(10):
         if args.src_burn_addr == str(wallet.derive_burn_addr(i).address):
             burn_addr = wallet.derive_burn_addr(i)
-            balance = w3.eth.get_balance(burn_addr)
+            balance = w3.eth.get_balance(burn_addr.address)
             break
 
     if not burn_addr:
