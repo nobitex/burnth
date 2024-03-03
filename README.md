@@ -1,3 +1,7 @@
+<p align="center">
+  <img width=200 src="https://github.com/nobitex/burnth/assets/4275654/e4a87112-2d10-4e4e-b93b-a9d23fd0f94c" />
+</p>
+ 
  # 🔥 Burnth / 🪱 WormCash
 
 Burnth is just eth, but burnt!
