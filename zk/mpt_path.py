@@ -6,7 +6,7 @@ import io
 from field import Field
 
 
-def get_mpt_path_proof(salt, lower, upper):
+def get_mpt_path_proof(salt, lower, upper, is_top):
     MAX_BLOCKS = 4
     numLowerLayerBytes = len(lower)
     numUpperLayerBytes = len(upper)
@@ -18,9 +18,10 @@ def get_mpt_path_proof(salt, lower, upper):
             {
                 "salt": salt,
                 "numLowerLayerBytes": numLowerLayerBytes,
-                "numUpperLayerBytes": numUpperLayerBytes,
+                "numUpperLayerBytes": 1 if is_top else numUpperLayerBytes,
                 "lowerLayerBytes": lowerLayer,
-                "upperLayerBytes": upperLayer,
+                "upperLayerBytes": [0] * MAX_BLOCKS * 136 if is_top else upperLayer,
+                "isTop": 1 if is_top else 0,
             },
             f,
         )

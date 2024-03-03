@@ -10,13 +10,12 @@ import os
 import json
 from hashlib import sha256
 import rlp
-import mpt_first
 import mpt_last
 import mpt_path
 import spend
 
 
-CONTRACT_ADDRESS = "0x42D4BA5e542d9FeD87EA657f0295F1968A61c00A"
+CONTRACT_ADDRESS = "0xDe2f00CCfEefAdD1Ecc87BE765cf46AC901A6AC8"
 SYMBOL = "BUTH"
 # PROVIDER = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
 # CHAIN_ID = 11155111
@@ -55,11 +54,39 @@ class Wallet:
         return BurnAddress(preimage)
 
 
-def get_proof_of_burn(burn_address: BurnAddress, salt, encrypted, provider, block_number):
-    w3 = Web3(Web3.HTTPProvider(provider))
-    block = w3.eth.get_block(block_number)
-    proof = w3.eth.get_proof(burn_address.address, [], block_number)
-    
+def get_block_splited_information(block):
+    hashes = [
+        block.parentHash.hex(),
+        block.sha3Uncles.hex(),
+        block.miner,
+        block.stateRoot.hex(),
+        block.transactionsRoot.hex(),
+        block.receiptsRoot.hex(),
+        block.logsBloom.hex(),
+        hex(block.difficulty),
+        hex(block.number),
+        hex(block.gasLimit),
+        hex(block.gasUsed),
+        hex(block.timestamp),
+        block.extraData.hex(),
+        block.mixHash.hex(),
+        block.nonce.hex(),
+        hex(block.baseFeePerGas),
+        block.withdrawalsRoot.hex(),
+    ]
+    hashes = ["0x" if h == "0x0" else h for h in hashes]
+    header = rlp.encode([Web3.to_bytes(hexstr=h) for h in hashes])
+
+    start_idx = header.index(bytes(block.stateRoot))
+    end_idx = start_idx + len(bytes(block.stateRoot))
+    prefix = header[:start_idx]
+    postfix = header[end_idx:]
+    commit_top = header[start_idx:end_idx]
+
+    return prefix, commit_top, postfix
+
+
+def get_proof_of_burn(burn_address: BurnAddress, salt, encrypted, block, proof):
     account_rlp = rlp.encode(
         [proof.nonce, proof.balance, proof.storageHash, proof.codeHash]
     )
@@ -69,8 +96,6 @@ def get_proof_of_burn(burn_address: BurnAddress, salt, encrypted, provider, bloc
         raise Exception("Not verified!")
 
     layers = []
-
-    first_proof = mpt_first.get_mpt_first_proof(block)
 
     last_proof, last_proof_upper_commit = mpt_last.get_last_proof(
         salt,
@@ -84,20 +109,22 @@ def get_proof_of_burn(burn_address: BurnAddress, salt, encrypted, provider, bloc
     )
     layers.append(last_proof_upper_commit)
 
+    root_proof = None
     path_proofs = []
     rev_proof = proof.accountProof[::-1]
     for index, level in enumerate(rev_proof):
         if index == len(rev_proof) - 1:
             if Web3.keccak(level) != block.stateRoot:
                 raise Exception("Not verified!")
+            root_proof, _ = mpt_path.get_mpt_path_proof(salt, level, block.stateRoot, True)
         else:
             if Web3.keccak(level) not in rev_proof[index + 1]:
                 raise Exception("Not verified!")
-            mpt_path_proof, mpt_path_upper_commit = mpt_path.get_mpt_path_proof(salt, level, rev_proof[index + 1])
+            mpt_path_proof, mpt_path_upper_commit = mpt_path.get_mpt_path_proof(salt, level, rev_proof[index + 1], False)
             path_proofs.append(mpt_path_proof)
             layers.append(mpt_path_upper_commit)
 
-    return layers, first_proof, path_proofs, last_proof
+    return layers, root_proof, path_proofs, last_proof
 
 parser = argparse.ArgumentParser(
     prog="burnth",
@@ -237,7 +264,12 @@ elif args.command == "mint":
     nullifier = mimc7(burn_addr.preimage, Field(0)).val
     layers = []
 
-    (layers, first_proof, mid_proofs, last_proof) = get_proof_of_burn(burn_addr, SALT, is_encrypted ,PROVIDER, block_number)
+    w3 = Web3(Web3.HTTPProvider(PROVIDER))
+    block = w3.eth.get_block(block_number)
+    proof = w3.eth.get_proof(burn_addr.address, [], block_number)
+
+    (layers, root_proof, mid_proofs, last_proof) = get_proof_of_burn(burn_addr, SALT, is_encrypted, block, proof)
+    (prefix, state_root, postfix) = get_block_splited_information(block)
 
     target = args.dst_addr
 
@@ -246,11 +278,14 @@ elif args.command == "mint":
         coin,
         nullifier,
         layers,
-        first_proof,
+        root_proof,
         mid_proofs,
         last_proof,
         is_encrypted,
-        target
+        target,
+        prefix,
+        state_root,
+        postfix,
     ]
 
     contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=json.load(open("/home/ostadgeorgre/work/nobitex/burnth/out/Burnth.sol/Burnth.json"))["abi"])
