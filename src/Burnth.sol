@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
-import "./MptFirstVerifier.sol";
 import "./MptMiddleVerifier.sol";
 import "./MptLastVerifier.sol";
 import "./SpendVerifier.sol";
@@ -29,17 +28,19 @@ contract Burnth is IERC20 {
         uint256 coin;
         uint256 nullifier;
         uint256[] layers;
-        Groth16Proof firstProof;
+        Groth16Proof rootProof;
         Groth16Proof[] midProofs;
         Groth16Proof lastProof;
         bool isEncrypted;
         address target;
+        bytes header_prefix;
+        bytes32 state_root;
+        bytes header_postfix;
     }
 
     SpendVerifier spend_verifier = new SpendVerifier();
     MptLastVerifier mpt_last_verifier = new MptLastVerifier();
     MptMiddleVerifier mpt_middle_verifier = new MptMiddleVerifier();
-    MptFirstVerifier mpt_first_verifier = new MptFirstVerifier();
     mapping(uint256 => bool) public nullifiers;
     mapping(uint256 => bool) public coins;
 
@@ -68,25 +69,28 @@ contract Burnth is IERC20 {
     }
 
     function verify_proof(PrivateProofOfBurn calldata proof) internal {
-        uint256 block_hash = uint256(blockhash(proof.blockNumber)) % FIELD_SIZE;
         uint256 is_encrypted = proof.isEncrypted ? 1 : 0;
+
+        require(proof.header_prefix.length == 91, "Burnth: invalid header prefix length");
+        require(keccak256(abi.encodePacked(proof.header_prefix, proof.state_root, proof.header_postfix)) == blockhash(proof.blockNumber), "Burnth: invalid block hash");
 
         require(!nullifiers[proof.nullifier], "Burnth: nullifier already used");
         nullifiers[proof.nullifier] = true;
 
-        require(mpt_first_verifier.verifyProof(
-            proof.firstProof.a,
-            proof.firstProof.b,
-            proof.firstProof.c,
-            [block_hash]
-        ), "MptFirstVerifier: invalid proof");
+        require(mpt_middle_verifier.verifyProof(
+            proof.rootProof.a,
+            proof.rootProof.b,
+            proof.rootProof.c,
+            [uint256(bytes32(proof.state_root)) % FIELD_SIZE, proof.layers[proof.layers.length - 1], uint256(1)]
+        ), "MptRootVerifier: invalid proof");
+
 
         for (uint256 i = 0; i < proof.layers.length - 1; i++) {
             require(mpt_middle_verifier.verifyProof(
                 proof.midProofs[i].a,
                 proof.midProofs[i].b,
                 proof.midProofs[i].c,
-                [proof.layers[i + 1], proof.layers[i]]
+                [proof.layers[i + 1], proof.layers[i], uint256(0)]
             ), "MptMiddleVerifier: invalid proof");
         }
 
