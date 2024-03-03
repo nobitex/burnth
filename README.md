@@ -21,6 +21,7 @@ Instead of having a giant circuit validating a complete MPT-proof, we'll decompo
 Our Modified-Merkle-Patricia-Trie-Proof-Verifier consists of 3 R1CS circuits, as described below:
 
 1. MPT-middle circuit: There exists a layer $`l_i`$ with commitment $`h(l_i | s)`$, such that $`keccak(l_i)`$ is a substring of $`l_{i-1}`$, with commitment $`h(l_{i-1} | s)`$ (Where $h$ is a SNARK-friendly hash function and $s$ is a random salt, added while commiting to the layer, so that verifier cannot guess the layer)
+2. MPT-last circuit: There exists an an account within a layer $l_{last}$, with commitment $`h(l_i | s)`$ that it's public-key is MiMC7 of some preimage $p$ ($`MiMC7(p,p)`$). Nullifier is $`MiMC7(p,0)`$
 
 ## Usage
 
