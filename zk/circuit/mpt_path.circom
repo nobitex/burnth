@@ -84,4 +84,4 @@ template KeccakLayerChecker(maxBlocks) {
     checker.out === 1 - isTop;
 }
 
-component main {public [isTop]} = KeccakLayerChecker(4);
+component main = KeccakLayerChecker(4);
