@@ -14,6 +14,26 @@ WormCash on the other hand, is a seperate crypto-token which can be minted by sp
 
 People can burn ETH, convert it into WormCash, and swap it back with ETH on a decentralized exchange. This makes the philosophy behind EIP-7503 viable, without needing any change to the core Ethereum protocol!
 
+## Usage
+
+Burnth is up on Sepolia testnet. You can burn some of your Sepolia ETH and give it a try!
+
+The project uses Circom/SnarkJS as its ZK proving system, thus you'll need to have `snarkjs` installed on your system in order to generate proofs:
+
+```
+sudo apt install npm
+sudo npm install -g snarkjs
+```
+
+You'll find a Python script `burnth` in the repo, which can be used for burning ETH and minting BURNTH.
+
+1. Burn your ETH: `burnth burn --priv-src [PRIVATE KEY OF THE SOURCE ACCOUNT] --amount [AMOUNT IN ETH]`.
+   This will transfer your funds into a burn-address. The burn-address is the result of running the zk-friendly MiMC7 hash function on some preimage, that is derived for you given a random entropy saved in `burnth.priv`. (WARN: Losing this file makes you unable of minting your BURNTH!)
+2. Check your burnt amounts: `burnth info`
+3. Mint your BURNTH: `burnth burn --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --amount [AMOUNT TO BE MINTED]`.
+   It's important to use a different account for paying the minting gas fees, otherwise, the burner's identity would be revealed.
+4. Congrats! Your BURNTH should now be in your wallet!
+
 ## The circuit
 
 The proof checks existence of some balance in a burn-address (Addresses which provably have no private-keys), by verifying a Merkle-Patricia-Trie proof.
@@ -27,17 +47,7 @@ Our Modified-Merkle-Patricia-Trie-Proof-Verifier consists of 3 R1CS circuits, as
 1. MPT-middle circuit: There exists a layer $`l_i`$ with commitment $`h(l_i | s)`$, such that $`keccak(l_i)`$ is a substring of $`l_{i-1}`$, with commitment $`h(l_{i-1} | s)`$ (Where $h$ is a SNARK-friendly hash function and $s$ is a random salt, added while commiting to the layer, so that verifier cannot guess the layer)
 2. MPT-last circuit: There exists an an account within a layer $l_{last}$, with commitment $`h(l_i | s)`$ that it's public-key is MiMC7 of some preimage $p$ ($`MiMC7(p,p)`$). Nullifier is $`MiMC7(p,0)`$
 
-## Usage
-
-You'll find a Python script `burnth` in the repo, which can be used for burning ETH and minting BURNTH.
-
-1. Burn your ETH: `burnth burn --priv-src [PRIVATE KEY OF THE SOURCE ACCOUNT] --amount [AMOUNT IN ETH]`.
-   This will transfer your funds into a burn-address. The burn-address is the result of running the zk-friendly MiMC7 hash function on some preimage, that is derived for you given a random entropy saved in `burnth.priv`. (WARN: Losing this file makes you unable of minting your BURNTH!)
-2. Check your burnt amounts: `burnth info`
-3. Mint your BURNTH: `burnth burn --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --amount [AMOUNT TO BE MINTED]`.
-   It's important to use a different account for paying the minting gas fees, otherwise, the burner's identity would be revealed.
-4. Congrats! Your BURNTH should now be in your wallet!
-
+There is also an extra Spend circuit, allowing you to partially mint your burnt amounts, ***without exposing the remaining amounts!***
 
 ## License
 
