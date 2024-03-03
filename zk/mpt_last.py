@@ -1,6 +1,6 @@
 import json, io, ast
-from field import Field
-from mimc7 import mimc7
+from .field import Field
+from .mimc7 import mimc7
 import os
 
 security = 20
@@ -10,7 +10,14 @@ maxPrefixLen = maxBlocks * 136 - maxLowerLen
 
 
 def get_last_proof(
-    salt, encrypted, lowerLayerPrefix, nonce, balance, storageHash, codeHash, burnPreimage
+    salt,
+    encrypted,
+    lowerLayerPrefix,
+    nonce,
+    balance,
+    storageHash,
+    codeHash,
+    burnPreimage,
 ):
     lowerLayerPrefixLen = len(lowerLayerPrefix)
     lowerLayerPrefix += (maxPrefixLen - len(lowerLayerPrefix)) * b"\x00"
@@ -31,12 +38,10 @@ def get_last_proof(
             f,
         )
 
-    os.system(
-        "cd zk && make gen_mpt_last_witness && make gen_mpt_last_proof"
-    )
+    os.system("cd zk && make gen_mpt_last_witness && make gen_mpt_last_proof")
 
     proof = open("/tmp/mpt_last_proof.json", "r").read()
-    proof = ast.literal_eval(proof)    
+    proof = ast.literal_eval(proof)
     proof = [
         [Field(int(s, 16)).val for s in proof[0]],
         [[Field(int(s, 16)).val for s in p] for p in proof[1]],

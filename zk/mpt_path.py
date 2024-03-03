@@ -3,7 +3,7 @@ import os
 import ast
 import io
 
-from field import Field
+from .field import Field
 
 
 def get_mpt_path_proof(salt, lower, upper, is_top):
@@ -26,12 +26,10 @@ def get_mpt_path_proof(salt, lower, upper, is_top):
             f,
         )
 
-    os.system(
-        "cd zk && make gen_mpt_path_witness && make gen_mpt_path_proof"
-    )
+    os.system("cd zk && make gen_mpt_path_witness && make gen_mpt_path_proof")
 
     proof = open("/tmp/mpt_path_proof.json", "r").read()
-    proof = ast.literal_eval(proof)    
+    proof = ast.literal_eval(proof)
     proof = [
         [Field(int(s, 16)).val for s in proof[0]],
         [[Field(int(s, 16)).val for s in p] for p in proof[1]],
