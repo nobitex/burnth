@@ -303,7 +303,7 @@ elif args.command == "mint":
         postfix,
     ]
 
-    contract = w3.eth.contract(address=NETWORK.contract_address, abi=json.load(open("abis/Burnth.json")))
+    contract = w3.eth.contract(address=NETWORK.contract_address, abi=json.load(open("abis/Burnth.abi")))
     address = w3.eth.account.from_key(args.priv_fee_payer).address
     nonce = w3.eth.get_transaction_count(address)
     gas_price = w3.eth.gas_price
@@ -340,7 +340,7 @@ elif args.command == "spend":
         proof,
     ]
 
-    contract = w3.eth.contract(address=NETWORK.contract_address, abi=json.load(open("abis/Burnth.json")))
+    contract = w3.eth.contract(address=NETWORK.contract_address, abi=json.load(open("abis/Burnth.abi")))
     address = w3.eth.account.from_key(args.priv_sender).address
     nonce = w3.eth.get_transaction_count(address)
     gas_price = w3.eth.gas_price
