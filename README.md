@@ -37,7 +37,7 @@ You'll find a Python script `burnth` in the repo, which can be used for burning 
 4. Check your burnt amounts: `burnth info`
 5. Mint your BURNTH:
 
-    `burnth burn --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --src-burn-addr [THE BURN-ADDRESS YOU WANT TO CONSUME]`
+    `burnth mint --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --src-burn-addr [THE BURN-ADDRESS YOU WANT TO CONSUME]`
 
     It's important to use a different account for paying the minting gas fees, otherwise, the burner's identity would be revealed.
 7. Congrats! Your BURNTH should now be in your wallet!
