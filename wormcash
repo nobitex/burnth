@@ -67,7 +67,6 @@ elif args.command == "participate":
         address = w3.eth.account.from_key(args.priv_src).address
         nonce = w3.eth.get_transaction_count(address)
         gas_price = w3.eth.gas_price
-        print(gas_price)
         txn = contract.functions.participate(amount_per_epoch, args.num_epochs).build_transaction({
             'chainId': NETWORK.chain_id,
             'gas': 7000000,
@@ -81,4 +80,24 @@ elif args.command == "participate":
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
         print("Receipt:", receipt)
 elif args.command == "claim":
-    pass
+    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
+    contract = w3.eth.contract(address=NETWORK.wormcash_contract_addr, abi=json.load(open("abis/WormCash.abi")))
+    ans = input(
+        f"Claiming WRM of {args.num_epochs} epochs. Are you sure? (Y/n): "
+    )
+    if ans.lower() == "y":
+        address = w3.eth.account.from_key(args.priv_src).address
+        nonce = w3.eth.get_transaction_count(address)
+        gas_price = w3.eth.gas_price
+        txn = contract.functions.claim(args.starting_epoch, args.num_epochs).build_transaction({
+            'chainId': NETWORK.chain_id,
+            'gas': 7000000,
+            "maxFeePerGas": gas_price,
+            "maxPriorityFeePerGas": gas_price // 2,
+            'nonce': nonce,
+        })
+        signed = w3.eth.account.sign_transaction(txn, args.priv_src)
+        tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+        print("Waiting for the receipt...")
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        print("Receipt:", receipt)
