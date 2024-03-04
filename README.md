@@ -30,7 +30,7 @@ You'll find a Python script `burnth` in the repo, which can be used for burning 
 1. Burn your ETH: `burnth burn --priv-src [PRIVATE KEY OF THE SOURCE ACCOUNT] --amount [AMOUNT IN ETH]`.
    This will transfer your funds into a burn-address. The burn-address is the result of running the zk-friendly MiMC7 hash function on some preimage, that is derived for you given a random entropy saved in `burnth.priv`. (WARN: Losing this file makes you unable of minting your BURNTH!)
 2. Check your burnt amounts: `burnth info`
-3. Mint your BURNTH: `burnth burn --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --amount [AMOUNT TO BE MINTED]`.
+3. Mint your BURNTH: `burnth burn --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --src-burn-addr [THE BURN-ADDRESS YOU WANT TO CONSUME]`.
    It's important to use a different account for paying the minting gas fees, otherwise, the burner's identity would be revealed.
 4. Congrats! Your BURNTH should now be in your wallet!
 
