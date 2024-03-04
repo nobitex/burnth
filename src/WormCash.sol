@@ -1,51 +1,22 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {IERC20} from "forge-std/interfaces/IERC20.sol";
+import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
-contract WormCash is IERC20 {
-    uint256 public totalSupply;
-    mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
-    string public name = "WormCash";
-    string public symbol = "BETH";
-    uint8 public decimals = 18;
-
-    function transfer(address recipient, uint256 amount) external returns (bool) {
-        balanceOf[msg.sender] -= amount;
-        balanceOf[recipient] += amount;
-        emit Transfer(msg.sender, recipient, amount);
-        return true;
-    }
-
-    function approve(address spender, uint256 amount) external returns (bool) {
-        allowance[msg.sender][spender] = amount;
-        emit Approval(msg.sender, spender, amount);
-        return true;
-    }
-
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
-        allowance[sender][msg.sender] -= amount;
-        balanceOf[sender] -= amount;
-        balanceOf[recipient] += amount;
-        emit Transfer(sender, recipient, amount);
-        return true;
-    }
-
+contract WormCash is ERC20 {
     IERC20 burnth_contract;
     uint256 starting_block;
+    mapping(uint256 => uint256) public rewards;
+    mapping(uint256 => uint256) public epoch_totals;
+    mapping(uint256 => mapping(address => uint256)) public epochs;
 
-    constructor(IERC20 _burnth_addr) {
+    constructor(IERC20 _burnth_addr) ERC20("WormCash", "WRM") {
         burnth_contract = _burnth_addr;
         starting_block = block.number;
         rewards[0] = 50_000_000_000;
     }
 
     uint256 constant BLOCK_PER_EPOCH = 10;
-
-    mapping(uint256 => uint256) public rewards;
-    mapping(uint256 => uint256) public epoch_totals;
-    mapping(uint256 => mapping(address => uint256)) public epochs;
 
     function currentEpoch() public view returns (uint256) {
         return (block.number - starting_block) / BLOCK_PER_EPOCH;
@@ -61,7 +32,6 @@ contract WormCash is IERC20 {
             rewards[i] = rewards[i - 1] - rewards[i - 1] / 10000000000;
             i += 1;
         }
-
         return rewards[_epoch];
     }
 
@@ -80,8 +50,6 @@ contract WormCash is IERC20 {
         uint256 user = epochs[epoch][msg.sender];
         epochs[epoch][msg.sender] = 0;
         uint256 mint_amount = rewardOf(epoch) * user / total;
-        balanceOf[msg.sender] += mint_amount;
-        totalSupply += mint_amount;
-        emit Transfer(address(0), msg.sender, mint_amount);
+        _mint(msg.sender, mint_amount);
     }
 }
