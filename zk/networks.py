@@ -1,17 +1,26 @@
 class Network:
-    def __init__(self, provider_url, chain_id, contract_address):
+    def __init__(
+        self, provider_url, chain_id, burnth_contract_addr, wormcash_contract_addr
+    ):
         self.provider_url = provider_url
         self.chain_id = chain_id
-        self.contract_address = contract_address
+        self.burnth_contract_addr = burnth_contract_addr
+        self.wormcash_contract_addr = wormcash_contract_addr
 
 
 NETWORKS = {
     "sepolia": Network(
         "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
         11155111,
-        "0xa1440a8B8b53a9e24fecC173d8C3821e870878A5",
+        "",
+        "",
     ),
     "ganache": Network(
-        "http://127.0.0.1:8545", 1337, "0xa1440a8B8b53a9e24fecC173d8C3821e870878A5"
+        "http://127.0.0.1:8545",
+        1337,
+        "0x9561C133DD8580860B6b7E504bC5Aa500f0f06a7",
+        "0xe982E462b094850F12AF94d21D470e21bE9D0E9C",
     ),
 }
+
+DEFAULT_NETWORK = "ganache"

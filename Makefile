@@ -1,7 +1,10 @@
-.PHONY = install abi
+.PHONY = build deploy_ganache abi
 
-install:
+build:
 	cd zk && make install
+
+deploy_ganache:
+	python3 deploy_ganache.py
 
 abi:
 	forge build --silent && jq '.abi' ./out/Burnth.sol/Burnth.json > abis/Burnth.abi

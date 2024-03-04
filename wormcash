@@ -1,0 +1,84 @@
+#!/usr/bin/python3
+import argparse
+import json
+from hashlib import sha256
+
+from web3 import Web3
+from zk.networks import NETWORKS, DEFAULT_NETWORK
+from hexbytes.main import HexBytes
+
+
+NETWORK = NETWORKS[DEFAULT_NETWORK]
+ABI = json.load(open("abis/WormCash.abi"))
+
+parser = argparse.ArgumentParser(
+    prog="wormcash",
+    description="WormCash miner!",
+    epilog="By Nobitex Labs - https://labs.nobitex.ir",
+)
+
+subparsers = parser.add_subparsers(help="WormCash", dest="command", required=True)
+
+parser_info = subparsers.add_parser(
+    "info", help="Information about your wallet!", allow_abbrev=False
+)
+parser_info.add_argument(
+    "--priv-src", type=str, help="Private key of the source account.", required=True
+)
+
+parser_participate = subparsers.add_parser("participate", help="Participate in WRM generation by consuming your BURNTH!", allow_abbrev=False)
+parser_participate.add_argument(
+    "--priv-src", type=str, help="Private key of the source account.", required=True
+)
+parser_participate.add_argument(
+    "--amount-per-epoch", type=float, help="Amount to be burnt per epoch.", required=True
+)
+parser_participate.add_argument(
+    "--num-epochs", type=int, help="Amount to be burnt per epoch.", required=True
+)
+
+parser_claim = subparsers.add_parser("claim", help="Claim your WRM!", allow_abbrev=False)
+parser_claim.add_argument(
+    "--priv-src", type=str, help="Private key of the source account.", required=True
+)
+parser_claim.add_argument(
+    "--starting-epoch", type=int, help="Epoch from which your claims start.", required=True
+)
+parser_claim.add_argument(
+    "--num-epochs", type=int, help="Number of epochs to be claimed.", required=True
+)
+
+args = parser.parse_args()
+
+if args.command == "info":
+    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
+    contract = w3.eth.contract(address=NETWORK.wormcash_contract_addr, abi=json.load(open("abis/WormCash.abi")))
+    address = w3.eth.account.from_key(args.priv_src).address
+    print("Your WormCash balance:", contract.functions.balanceOf(address).call())
+elif args.command == "participate":
+    amount_per_epoch = Web3.to_wei(args.amount_per_epoch, "ether")
+    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
+    contract = w3.eth.contract(address=NETWORK.wormcash_contract_addr, abi=json.load(open("abis/WormCash.abi")))
+    approx = Web3.from_wei(contract.functions.approximate(amount_per_epoch, args.num_epochs).call(), "ether")
+    ans = input(
+        f"Consuming {args.amount_per_epoch * args.num_epochs} BURNTH. This will generate approximately {approx} WRM. Are you sure? (Y/n): "
+    )
+    if ans.lower() == "y":
+        address = w3.eth.account.from_key(args.priv_src).address
+        nonce = w3.eth.get_transaction_count(address)
+        gas_price = w3.eth.gas_price
+        print(gas_price)
+        txn = contract.functions.participate(amount_per_epoch, args.num_epochs).build_transaction({
+            'chainId': NETWORK.chain_id,
+            'gas': 7000000,
+            "maxFeePerGas": gas_price,
+            "maxPriorityFeePerGas": gas_price // 2,
+            'nonce': nonce,
+        })
+        signed = w3.eth.account.sign_transaction(txn, args.priv_src)
+        tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+        print("Waiting for the receipt...")
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+        print("Receipt:", receipt)
+elif args.command == "claim":
+    pass

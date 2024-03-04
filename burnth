@@ -14,11 +14,11 @@ from zk import mpt_path
 from zk import spend
 from zk.mimc7 import mimc7
 from zk.field import Field
-from zk.networks import NETWORKS
+from zk.networks import NETWORKS, DEFAULT_NETWORK
 from hexbytes.main import HexBytes
 
 
-NETWORK = NETWORKS["sepolia"]
+NETWORK = NETWORKS[DEFAULT_NETWORK]
 SYMBOL = "BURNTH"
 
 SALT = 1234
@@ -303,7 +303,7 @@ elif args.command == "mint":
         postfix,
     ]
 
-    contract = w3.eth.contract(address=NETWORK.contract_address, abi=json.load(open("abis/Burnth.abi")))
+    contract = w3.eth.contract(address=NETWORK.burnth_contract_addr, abi=json.load(open("abis/Burnth.abi")))
     address = w3.eth.account.from_key(args.priv_fee_payer).address
     nonce = w3.eth.get_transaction_count(address)
     gas_price = w3.eth.gas_price
@@ -340,7 +340,7 @@ elif args.command == "spend":
         proof,
     ]
 
-    contract = w3.eth.contract(address=NETWORK.contract_address, abi=json.load(open("abis/Burnth.abi")))
+    contract = w3.eth.contract(address=NETWORK.burnth_contract_addr, abi=json.load(open("abis/Burnth.abi")))
     address = w3.eth.account.from_key(args.priv_sender).address
     nonce = w3.eth.get_transaction_count(address)
     gas_price = w3.eth.gas_price
