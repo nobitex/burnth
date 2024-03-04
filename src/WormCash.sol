@@ -22,9 +22,9 @@ contract WormCash is ERC20 {
         return (block.number - starting_block) / BLOCK_PER_EPOCH;
     }
 
-    function rewardOf(uint256 _epoch) public returns (uint256) {
+    function rewardOf(uint256 _epoch) public pure returns (uint256) {
         uint256 reward = MAX_REWARD;
-        for(uint i = 0; i < _epoch; i++) {
+        for (uint256 i = 0; i < _epoch; i++) {
             reward = reward - reward / REWARD_DECREASE_RATE;
         }
         return reward;
