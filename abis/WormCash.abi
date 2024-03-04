@@ -60,6 +60,30 @@
   },
   {
     "type": "function",
+    "name": "approximate",
+    "inputs": [
+      {
+        "name": "amount_per_epoch",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "num_epochs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "balanceOf",
     "inputs": [
       {

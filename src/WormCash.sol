@@ -22,6 +22,17 @@ contract WormCash is ERC20 {
         return (block.number - starting_block) / BLOCK_PER_EPOCH;
     }
 
+    function approximate(uint256 amount_per_epoch, uint256 num_epochs) public view returns (uint256) {
+        uint256 mint_amount = 0;
+        uint256 currEpoch = currentEpoch();
+        for (uint256 i = 0; i < num_epochs; i++) {
+            uint256 user = epochs[currEpoch + i][msg.sender] + amount_per_epoch;
+            uint256 total = epoch_totals[currEpoch + i] + amount_per_epoch;
+            mint_amount += rewardOf(currEpoch + i) * user / total;
+        }
+        return mint_amount;
+    }
+
     function rewardOf(uint256 _epoch) public pure returns (uint256) {
         uint256 reward = MAX_REWARD;
         for (uint256 i = 0; i < _epoch; i++) {
