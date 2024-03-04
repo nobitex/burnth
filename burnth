@@ -18,7 +18,7 @@ from hexbytes.main import HexBytes
 
 
 CONTRACT_ADDRESS = "0xa1440a8B8b53a9e24fecC173d8C3821e870878A5"
-SYMBOL = "BUTH"
+SYMBOL = "BURNTH"
 PROVIDER = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
 CHAIN_ID = 11155111
 # PROVIDER = "http://127.0.0.1:8545"
