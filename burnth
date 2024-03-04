@@ -264,16 +264,14 @@ elif args.command == "mint":
     for i in range(10):
         if args.src_burn_addr == str(wallet.derive_burn_addr(i).address):
             burn_addr = wallet.derive_burn_addr(i)
-            balance = w3.eth.get_balance(burn_addr.address)
+            coin = w3.eth.get_balance(burn_addr.address)
             break
 
     if not burn_addr:
         raise Exception("Burn address not found!")
 
-
     is_encrypted = args.encrypted
     block_number = w3.eth.get_block_number()
-    coin = Web3.to_wei(balance, "ether")
     if is_encrypted:
         coin = mimc7(Field(coin), Field(SALT)).val
     nullifier = mimc7(burn_addr.preimage, Field(0)).val
