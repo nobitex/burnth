@@ -8,9 +8,8 @@ import "./SpendVerifier.sol";
 import "./Console.sol";
 
 contract Burnth is ERC20 {
-
     uint256 constant FIELD_SIZE = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
-    
+
     struct Groth16Proof {
         uint256[2] a;
         uint256[2][2] b;
@@ -39,7 +38,9 @@ contract Burnth is ERC20 {
     mapping(uint256 => bool) public coins;
 
     event CoinGenerated(address recipient, uint256 coin);
-    event CoinSpent(address spender, uint256 coin, uint256 remainingCoin, uint256 withdrawnBalance, address destination);
+    event CoinSpent(
+        address spender, uint256 coin, uint256 remainingCoin, uint256 withdrawnBalance, address destination
+    );
 
     constructor() ERC20("Burnth", "BURNTH") {}
 
@@ -47,34 +48,46 @@ contract Burnth is ERC20 {
         uint256 is_encrypted = proof.isEncrypted ? 1 : 0;
 
         require(proof.header_prefix.length == 91, "Burnth: invalid header prefix length");
-        require(keccak256(abi.encodePacked(proof.header_prefix, proof.state_root, proof.header_postfix)) == blockhash(proof.blockNumber), "Burnth: invalid block hash");
+        require(
+            keccak256(abi.encodePacked(proof.header_prefix, proof.state_root, proof.header_postfix))
+                == blockhash(proof.blockNumber),
+            "Burnth: invalid block hash"
+        );
 
         require(!nullifiers[proof.nullifier], "Burnth: nullifier already used");
         nullifiers[proof.nullifier] = true;
 
-        require(mpt_middle_verifier.verifyProof(
-            proof.rootProof.a,
-            proof.rootProof.b,
-            proof.rootProof.c,
-            [uint256(bytes32(proof.state_root)) % FIELD_SIZE, proof.layers[proof.layers.length - 1]]
-        ), "MptRootVerifier: invalid proof");
-
+        require(
+            mpt_middle_verifier.verifyProof(
+                proof.rootProof.a,
+                proof.rootProof.b,
+                proof.rootProof.c,
+                [uint256(bytes32(proof.state_root)) % FIELD_SIZE, proof.layers[proof.layers.length - 1]]
+            ),
+            "MptRootVerifier: invalid proof"
+        );
 
         for (uint256 i = 0; i < proof.layers.length - 1; i++) {
-            require(mpt_middle_verifier.verifyProof(
-                proof.midProofs[i].a,
-                proof.midProofs[i].b,
-                proof.midProofs[i].c,
-                [proof.layers[i + 1], proof.layers[i]]
-            ), "MptMiddleVerifier: invalid proof");
+            require(
+                mpt_middle_verifier.verifyProof(
+                    proof.midProofs[i].a,
+                    proof.midProofs[i].b,
+                    proof.midProofs[i].c,
+                    [proof.layers[i + 1], proof.layers[i]]
+                ),
+                "MptMiddleVerifier: invalid proof"
+            );
         }
 
-        require(mpt_last_verifier.verifyProof(
-            proof.lastProof.a,
-            proof.lastProof.b,
-            proof.lastProof.c,
-            [proof.layers[0], proof.coin, proof.nullifier, is_encrypted]
-        ), "MptLastVerifier: invalid proof");
+        require(
+            mpt_last_verifier.verifyProof(
+                proof.lastProof.a,
+                proof.lastProof.b,
+                proof.lastProof.c,
+                [proof.layers[0], proof.coin, proof.nullifier, is_encrypted]
+            ),
+            "MptLastVerifier: invalid proof"
+        );
     }
 
     function mint(PrivateProofOfBurn calldata proof) external {
@@ -91,19 +104,17 @@ contract Burnth is ERC20 {
     function spend(
         uint256 coin,
         uint256 remainingCoin,
-        uint256 withdrawnBalance, 
+        uint256 withdrawnBalance,
         address destination,
         Groth16Proof calldata proof
     ) external {
         require(coins[coin], "Burnth: coin is not valid");
         coins[coin] = false;
 
-        require(spend_verifier.verifyProof(
-            proof.a,
-            proof.b,
-            proof.c,
-            [coin, remainingCoin, withdrawnBalance]
-        ), "SpendVerifier: invalid proof");
+        require(
+            spend_verifier.verifyProof(proof.a, proof.b, proof.c, [coin, remainingCoin, withdrawnBalance]),
+            "SpendVerifier: invalid proof"
+        );
 
         coins[remainingCoin] = true;
         _mint(destination, withdrawnBalance);
