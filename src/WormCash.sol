@@ -51,13 +51,14 @@ contract WormCash is ERC20 {
     }
 
     function claim(uint256 starting_epoch, uint256 num_epochs) external {
+        require(starting_epoch + num_epochs <= currentEpoch(), "Cannot claim an ongoing epoch!");
         uint256 mint_amount = 0;
         for (uint256 i = 0; i < num_epochs; i++) {
             uint256 total = epoch_totals[starting_epoch + i];
-            if(total > 0) {
+            if (total > 0) {
                 uint256 user = epochs[starting_epoch + i][msg.sender];
                 epochs[i][msg.sender] = 0;
-                mint_amount += rewardOf(i) * user / total;
+                mint_amount += rewardOf(starting_epoch + i) * user / total;
             }
         }
         _mint(msg.sender, mint_amount);
