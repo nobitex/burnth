@@ -17,12 +17,19 @@ from zk.field import Field
 from hexbytes.main import HexBytes
 
 
-CONTRACT_ADDRESS = "0xa1440a8B8b53a9e24fecC173d8C3821e870878A5"
+class Network:
+    def __init__(self, provider_url, chain_id, contract_address):
+        self.provider_url = provider_url
+        self.chain_id = chain_id
+        self.contract_address = contract_address
+    
+networks = {
+    "sepolia": Network("https://ethereum-sepolia.blockpi.network/v1/rpc/public", 11155111, "0xa1440a8B8b53a9e24fecC173d8C3821e870878A5"),
+    "ganache": Network("http://127.0.0.1:8545", 1337, "0xa1440a8B8b53a9e24fecC173d8C3821e870878A5"),
+}
+
+NETWORK = networks["sepolia"]
 SYMBOL = "BURNTH"
-PROVIDER = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
-CHAIN_ID = 11155111
-# PROVIDER = "http://127.0.0.1:8545"
-# CHAIN_ID = 1337
 
 SALT = 1234
 
@@ -216,7 +223,7 @@ parser_spend.add_argument(
 args = parser.parse_args()
 
 if args.command == "info":
-    w3 = Web3(Web3.HTTPProvider(PROVIDER))
+    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
     wallet = Wallet.open_or_create()
     print("Your burn-addresses:")
     print()
@@ -231,7 +238,7 @@ if args.command == "info":
             print(f"#{i+1}: {burn_addr} ({eth} ETH)")
             i += 1
 elif args.command == "burn":
-    w3 = Web3(Web3.HTTPProvider(PROVIDER))
+    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
     wallet = Wallet.open_or_create()
     for i in range(10):
         burn_addr = wallet.derive_burn_addr(i).address
@@ -253,7 +260,7 @@ elif args.command == "burn":
             "gas": 21000,
             "maxFeePerGas": gas_price,
             "maxPriorityFeePerGas": gas_price // 2,
-            "chainId": CHAIN_ID,
+            "chainId": NETWORK.chain_id,
         }
         signed = w3.eth.account.sign_transaction(transaction, args.priv_src)
         tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
@@ -261,7 +268,7 @@ elif args.command == "burn":
         receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
         print("Receipt:", receipt)
 elif args.command == "mint":
-    w3 = Web3(Web3.HTTPProvider(PROVIDER))
+    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
     wallet = Wallet.open_or_create()
     burn_addr = None
     for i in range(10):
@@ -282,7 +289,7 @@ elif args.command == "mint":
     nullifier = mimc7(burn_addr.preimage, Field(0)).val
     layers = []
 
-    w3 = Web3(Web3.HTTPProvider(PROVIDER))
+    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
     block = w3.eth.get_block(block_number)
     proof = w3.eth.get_proof(burn_addr.address, [], block_number)
 
@@ -306,13 +313,13 @@ elif args.command == "mint":
         postfix,
     ]
 
-    contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=json.load(open("/home/ostadgeorgre/work/nobitex/burnth/out/Burnth.sol/Burnth.json"))["abi"])
+    contract = w3.eth.contract(address=NETWORK.contract_address, abi=json.load(open("abis/Burnth.json")))
     address = w3.eth.account.from_key(args.priv_fee_payer).address
     nonce = w3.eth.get_transaction_count(address)
     gas_price = w3.eth.gas_price
 
     txn = contract.functions.mint(contract_feed).build_transaction({
-        'chainId': CHAIN_ID,
+        'chainId': NETWORK.chain_id,
         'gas': 7000000,
         "maxFeePerGas": gas_price,
         "maxPriorityFeePerGas": gas_price // 2,
@@ -326,7 +333,7 @@ elif args.command == "mint":
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     print("Receipt:", receipt)
 elif args.command == "spend":
-    w3 = Web3(Web3.HTTPProvider(PROVIDER))
+    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
 
     coin_balance = Web3.to_wei(args.coin_balance, "ether")
     coin = mimc7(Field(coin_balance), Field(SALT)).val
@@ -343,13 +350,13 @@ elif args.command == "spend":
         proof,
     ]
 
-    contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=json.load(open("/home/ostadgeorgre/work/nobitex/burnth/out/Burnth.sol/Burnth.json"))["abi"])
+    contract = w3.eth.contract(address=NETWORK.contract_address, abi=json.load(open("abis/Burnth.json")))
     address = w3.eth.account.from_key(args.priv_sender).address
     nonce = w3.eth.get_transaction_count(address)
     gas_price = w3.eth.gas_price
 
     txn = contract.functions.spend(*contract_feed).build_transaction({
-        'chainId': CHAIN_ID,
+        'chainId': NETWORK.chain_id,
         'gas': 7000000,
         "maxFeePerGas": gas_price,
         "maxPriorityFeePerGas": gas_price // 2,
