@@ -27,28 +27,32 @@ sudo npm install -g snarkjs
 
 Here you can find the installation guide of circom: https://docs.circom.io/getting-started/installation/
 
-You'll also need to have the `web3` python package installed on your system: `sudo pip3 install web3`
-
 1. Clone the `burnth` repository, `cd` into it, and then perform a `make` to download the trusted-setup params:
+```
+git clone https://github.com/nobitex/burnth && cd burnth
+make
+```
+3. You'll also need to have the some python package installed on your system:
+```
+sudo pip3 install -r requirements.txt
+```
 
-    `git clone https://github.com/nobitex/burnth && cd burnth && make`
-
-2. Burn your ETH:
+3. Burn your ETH:
 
     `./burnth burn --priv-src [PRIVATE KEY OF THE SOURCE ACCOUNT] --amount [AMOUNT IN ETH]`
 
     This will transfer your funds into a burn-address. The burn-address is the result of running the zk-friendly MiMC7 hash function on some preimage, that is derived for you given a random entropy saved in `burnth.priv`. (WARN: Losing this file makes you unable of minting your BURNTH!)
 
-3. Check your burnt amounts:
+4. Check your burnt amounts:
 
     `burnth info`
 
-4. Mint your BURNTH:
+5. Mint your BURNTH:
 
     `./burnth mint --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --src-burn-addr [THE BURN-ADDRESS YOU WANT TO CONSUME]`
 
     It's important to use a different account for paying the minting gas fees, otherwise, the burner's identity would be revealed.
-5. Congrats! Your BURNTH should now be in your wallet!
+6. Congrats! Your BURNTH should now be in your wallet!
 
 ## The circuit
 
