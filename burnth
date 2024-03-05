@@ -3,7 +3,7 @@ import argparse
 
 from zk.networks import NETWORKS, DEFAULT_NETWORK
 from commands import (
-    info_cmd,
+    info_cmd, InfoContext,
     burn_cmd, BurnContext,
     mint_cmd, MintContext,
     spend_cmd, SpendContext,
@@ -24,6 +24,9 @@ subparsers = parser.add_subparsers(help="Burnth", dest="command", required=True)
 
 parser_info = subparsers.add_parser(
     "info", help="Information about your wallet!", allow_abbrev=False
+)
+parser_info.add_argument(
+    "--priv-src", type=str, help="Private key to get balance.", required=False
 )
 
 parser_burn = subparsers.add_parser("burn", help="Burn ETH!", allow_abbrev=False)
@@ -85,7 +88,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.command == "info":
-        info_cmd(NETWORK)
+        context = InfoContext(
+            args.priv_src
+        )
+        info_cmd(NETWORK, context)
 
     elif args.command == "burn":
         context = BurnContext(

@@ -86,6 +86,7 @@ def mint_cmd(network: Network, context: MintContext):
         raise Exception("Transaction failed!")
 
     # TODO: if save failed, the coin will be lost. Need to fix this.
-    wallet.add_coin(coin)
+    if context.encrypted:
+        wallet.add_coin(coin)
     wallet.save()
     print("Minted successfully!")

@@ -18,8 +18,8 @@ NETWORKS = {
     "ganache": Network(
         "http://127.0.0.1:8545",
         1337,
-        "0x49bC4443E05f7c05A823920CaD1c9EbaAcD7201E",
-        "0xBc53027c52B0Ee6ad90347b8D03A719f30d9d7aB",
+        "0x457f0f599CC62A41B221cC94bC9d5Cf0012D21A8",
+        "0x0937F524C8A7d3D6Af3023875CF6c7f293F3B994",
     ),
 }
 

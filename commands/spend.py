@@ -1,13 +1,11 @@
 from web3 import Web3
 from zk.networks import Network
 from zk.field import Field
-from zk.mimc7 import mimc7
 from zk.models import Wallet
 from zk import spend
 
 import json
 
-SALT = 1234
 
 class SpendContext:
     coin_index: int
