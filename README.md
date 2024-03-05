@@ -32,7 +32,7 @@ Here you can find the installation guide of circom: https://docs.circom.io/getti
 git clone https://github.com/nobitex/burnth && cd burnth
 make
 ```
-3. You'll also need to have the some python package installed on your system:
+2. You'll also need to have the some python package installed on your system:
 ```
 sudo pip3 install -r requirements.txt
 ```
