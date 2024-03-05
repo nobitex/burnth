@@ -1,5 +1,5 @@
 .PHONY = gen_mpt_path_witness gen_mpt_path_proof gen_mpt_path_solidity gen_mpt_last_witness gen_mpt_last_proof gen_mpt_last_solidity gen_spend_witness gen_spend_proof gen_spend_solidity
- 
+
 circuit/pot_final.ptau:
 	cd circuit && snarkjs powersoftau new bn128 21 pot_0000.ptau -v
 	cd circuit && snarkjs powersoftau contribute pot_0000.ptau pot_0001.ptau --entropy=1234 --name="first contribution" -v
@@ -14,10 +14,13 @@ circuit/mpt_path_cpp/mpt_path: circuit/mpt_path.circom circuit/utils/*.circom
 	cd circuit/mpt_path_cpp && make
 
 circuit/mpt_path_0001.zkey: circuit/mpt_path_cpp/mpt_path
-	# cd circuit && snarkjs groth16 setup mpt_path.r1cs pot_final.ptau mpt_path_0000.zkey
-	# cd circuit && snarkjs zkey contribute mpt_path_0000.zkey mpt_path_0001.zkey --entropy=1234 --name="second contribution" -v
+ifeq ($(DOWNLOAD_ZKEY_FROM_GIT), true)
 	cd circuit && wget -c https://github.com/nobitex/burnth/releases/download/v0.1.0-sepolia/mpt_path_0001.zkey
 	cd circuit && snarkjs zkey export verificationkey mpt_path_0001.zkey verification_key.json
+else
+	cd circuit && snarkjs groth16 setup mpt_path.r1cs pot_final.ptau mpt_path_0000.zkey
+	cd circuit && snarkjs zkey contribute mpt_path_0000.zkey mpt_path_0001.zkey --entropy=1234 --name="second contribution" -v
+endif
 
 gen_mpt_path_witness:
 	cd circuit && ./mpt_path_cpp/mpt_path /tmp/input_mpt_path.json mpt_path_witness.wtns
@@ -40,10 +43,13 @@ circuit/mpt_last_cpp/mpt_last: circuit/mpt_last.circom circuit/utils/*.circom
 	cd circuit/mpt_last_cpp && make
 
 circuit/mpt_last_0001.zkey: circuit/mpt_last_cpp/mpt_last
-	# cd circuit && snarkjs groth16 setup mpt_last.r1cs pot_final.ptau mpt_last_0000.zkey
-	# cd circuit && snarkjs zkey contribute mpt_last_0000.zkey mpt_last_0001.zkey --entropy=1234 --name="second contribution" -v
+ifeq ($(DOWNLOAD_ZKEY_FROM_GIT), true)
 	cd circuit && wget -c https://github.com/nobitex/burnth/releases/download/v0.1.0-sepolia/mpt_last_0001.zkey
 	cd circuit && snarkjs zkey export verificationkey mpt_last_0001.zkey verification_key.json
+else
+	cd circuit && snarkjs groth16 setup mpt_last.r1cs pot_final.ptau mpt_last_0000.zkey
+	cd circuit && snarkjs zkey contribute mpt_last_0000.zkey mpt_last_0001.zkey --entropy=1234 --name="second contribution" -v
+endif
 
 gen_mpt_last_witness:
 	cd circuit && ./mpt_last_cpp/mpt_last /tmp/input_mpt_last.json mpt_last_witness.wtns
@@ -66,10 +72,13 @@ circuit/spend_cpp/spend: circuit/spend.circom circuit/utils/*.circom
 	cd circuit/spend_cpp && make
 
 circuit/spend_0001.zkey: circuit/spend_cpp/spend
-	# cd circuit && snarkjs groth16 setup spend.r1cs pot_final.ptau spend_0000.zkey
-	# cd circuit && snarkjs zkey contribute spend_0000.zkey spend_0001.zkey --entropy=1234 --name="second contribution" -v
+ifeq ($(DOWNLOAD_ZKEY_FROM_GIT), true)
 	cd circuit && wget -c https://github.com/nobitex/burnth/releases/download/v0.1.0-sepolia/spend_0001.zkey
 	cd circuit && snarkjs zkey export verificationkey spend_0001.zkey verification_key.json
+else
+	cd circuit && snarkjs groth16 setup spend.r1cs pot_final.ptau spend_0000.zkey
+	cd circuit && snarkjs zkey contribute spend_0000.zkey spend_0001.zkey --entropy=1234 --name="second contribution" -v
+endif
 
 gen_spend_witness: circuit/spend_cpp/spend
 	cd circuit && ./spend_cpp/spend /tmp/input_spend.json spend_witness.wtns
@@ -92,3 +101,5 @@ clean_all: clean
 	rm -rf circuit/*.zkey
 
 install: gen_mpt_path_solidity gen_mpt_last_solidity gen_spend_solidity
+
+DOWNLOAD_ZKEY_FROM_GIT ?= true
