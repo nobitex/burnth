@@ -1,16 +1,22 @@
 import subprocess
 import json
+import sys
+
+RPC_URL = sys.argv[1]
+PRIVATE_KEY = sys.argv[2]
+
+print("Deploying contracts...")
 
 p = subprocess.run(
     [
         "forge",
         "create",
         "--rpc-url",
-        "http://127.0.0.1:8545",
+        RPC_URL,
         "--json",
         "--legacy",
         "--private-key",
-        "0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d",
+        PRIVATE_KEY,
         "src/Burnth.sol:Burnth",
     ],
     capture_output=True,
@@ -25,11 +31,11 @@ p = subprocess.run(
         "forge",
         "create",
         "--rpc-url",
-        "http://127.0.0.1:8545",
+        RPC_URL,
         "--json",
         "--legacy",
         "--private-key",
-        "0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d",
+        PRIVATE_KEY,
         "src/WormCash.sol:WormCash",
         "--constructor-args",
         burnth_contract_addr,
