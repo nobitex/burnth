@@ -18,29 +18,37 @@ People can burn ETH, convert it into WormCash, and swap it back with ETH on a de
 
 Burnth is up on Sepolia testnet. You can burn some of your Sepolia ETH and give it a try!
 
-The project uses Circom/SnarkJS as its ZK proving system, thus you'll need to have `snarkjs` installed on your system in order to generate proofs:
+The project uses Circom/SnarkJS as its ZK proving system, thus you'll need to have both `snarkjs` and `circom` installed on your system in order to generate proofs:
 
 ```
 sudo apt install npm
 sudo npm install -g snarkjs
 ```
 
+Here you can find the installation guide of circom: https://docs.circom.io/getting-started/installation/
+
 You'll also need to have the `web3` python package installed on your system: `sudo pip3 install web3`
 
-You'll find a Python script `burnth` in the repo, which can be used for burning ETH and minting BURNTH.
+1. Clone the `burnth` repository, `cd` into it, and then perform a `make` to download the trusted-setup params:
 
-1. Burn your ETH:
+    `git clone https://github.com/nobitex/burnth && cd burnth && make`
 
-    `burnth burn --priv-src [PRIVATE KEY OF THE SOURCE ACCOUNT] --amount [AMOUNT IN ETH]`
+2. Burn your ETH:
+
+    `./burnth burn --priv-src [PRIVATE KEY OF THE SOURCE ACCOUNT] --amount [AMOUNT IN ETH]`
 
     This will transfer your funds into a burn-address. The burn-address is the result of running the zk-friendly MiMC7 hash function on some preimage, that is derived for you given a random entropy saved in `burnth.priv`. (WARN: Losing this file makes you unable of minting your BURNTH!)
-4. Check your burnt amounts: `burnth info`
-5. Mint your BURNTH:
 
-    `burnth mint --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --src-burn-addr [THE BURN-ADDRESS YOU WANT TO CONSUME]`
+3. Check your burnt amounts:
+
+    `burnth info`
+
+4. Mint your BURNTH:
+
+    `./burnth mint --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --src-burn-addr [THE BURN-ADDRESS YOU WANT TO CONSUME]`
 
     It's important to use a different account for paying the minting gas fees, otherwise, the burner's identity would be revealed.
-7. Congrats! Your BURNTH should now be in your wallet!
+5. Congrats! Your BURNTH should now be in your wallet!
 
 ## The circuit
 
@@ -56,6 +64,8 @@ Our Modified-Merkle-Patricia-Trie-Proof-Verifier consists of 3 R1CS circuits, as
 2. MPT-last circuit: There exists an an account within a layer $l_{last}$, with commitment $`h(l_i | s)`$ that it's public-key is MiMC7 of some preimage $p$ ($`MiMC7(p,p)`$). Nullifier is $`MiMC7(p,0)`$
 
 There is also an extra Spend circuit, allowing you to partially mint your burnt amounts, ***without exposing the remaining amounts!***
+
+***The parameter files are approximately 500MB and it takes aroung 1 minute to generate a single proof of burn.***
 
 ## License
 
