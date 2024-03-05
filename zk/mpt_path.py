@@ -16,7 +16,7 @@ def get_mpt_path_proof(salt, lower, upper, is_top):
     with io.open("/tmp/input_mpt_path.json", "w") as f:
         json.dump(
             {
-                "salt": salt,
+                "salt": str(salt),
                 "numLowerLayerBytes": numLowerLayerBytes,
                 "numUpperLayerBytes": 1 if is_top else numUpperLayerBytes,
                 "lowerLayerBytes": lowerLayer,

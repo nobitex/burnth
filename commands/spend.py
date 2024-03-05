@@ -2,6 +2,7 @@ from web3 import Web3
 from zk.networks import Network
 from zk.field import Field
 from zk.mimc7 import mimc7
+from zk.models import Wallet
 from zk import spend
 
 import json
@@ -9,13 +10,13 @@ import json
 SALT = 1234
 
 class SpendContext:
-    coin_balance: float
+    coin_index: int
     amount: float
     dst_addr: str
     priv_sender: str
 
-    def __init__(self, coin_balance: float, amount: float, dst_addr: str, priv_sender: str):
-        self.coin_balance = coin_balance
+    def __init__(self, coin_index: int, amount: float, dst_addr: str, priv_sender: str):
+        self.coin_index = coin_index
         self.amount = amount
         self.dst_addr = dst_addr
         self.priv_sender = priv_sender
@@ -23,17 +24,18 @@ class SpendContext:
 
 def spend_cmd(network: Network, context: SpendContext):
     w3 = Web3(Web3.HTTPProvider(network.provider_url))
+    wallet = Wallet.open_or_create()
 
-    coin_balance = Web3.to_wei(context.coin_balance, "ether")
-    coin = mimc7(Field(coin_balance), Field(SALT)).val
+    coin = wallet.coins[context.coin_index - 1]
+    coin_balance = coin.amount.val
     widthdrawn_amount = Web3.to_wei(context.amount, "ether")
     remaining_balance = coin_balance - widthdrawn_amount
-    remaining_coin = mimc7(Field(remaining_balance), Field(SALT)).val
-    proof = spend.get_spend_proof(SALT, coin_balance, widthdrawn_amount)
+    remaining_coin = wallet.derive_coin(Field(remaining_balance), encrypted=True)
+    proof = spend.get_spend_proof(coin.salt.val, coin_balance, widthdrawn_amount, remaining_coin.salt.val)
 
     contract_feed = [
-        coin,
-        remaining_coin,
+        coin.get_value(),
+        remaining_coin.get_value(),
         widthdrawn_amount,
         context.dst_addr,
         proof,
@@ -58,3 +60,11 @@ def spend_cmd(network: Network, context: SpendContext):
     print("Waiting for the receipt...")
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     print("Receipt:", receipt)
+
+    if receipt.status == 0:
+        raise Exception("Transaction failed")
+
+    wallet.remove_coin(context.coin_index - 1)
+    wallet.coins.append(remaining_coin)
+    wallet.save()
+    print("Transaction successful")

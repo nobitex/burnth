@@ -14,6 +14,7 @@ template Spend() {
     coin <== coinHasher.hash;
 
     signal input withdrawnBalance;
+    signal input remainingCoinSalt;
     signal output remainingCoin;
 
     component sufficientBalanceChecker = GreaterEqThan(252);
@@ -23,7 +24,7 @@ template Spend() {
 
     component remainingCoinHasher = Hasher();
     remainingCoinHasher.left <== balance - withdrawnBalance;
-    remainingCoinHasher.right <== salt;
+    remainingCoinHasher.right <== remainingCoinSalt;
     remainingCoin <== remainingCoinHasher.hash;
 }
 

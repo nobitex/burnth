@@ -7,8 +7,6 @@ from zk.utils import get_block_splited_information, get_proof_of_burn
 
 import json
 
-SALT = 1234
-
 class MintContext:
     src_burn_addr: str
     dst_addr: str
@@ -29,16 +27,14 @@ def mint_cmd(network: Network, context: MintContext):
     for i in range(10):
         if context.src_burn_addr == str(wallet.derive_burn_addr(i).address):
             burn_addr = wallet.derive_burn_addr(i)
-            coin = w3.eth.get_balance(burn_addr.address)
+            amount = w3.eth.get_balance(burn_addr.address)
             break
 
     if not burn_addr:
         raise Exception("Burn address not found!")
 
-    is_encrypted = context.encrypted
     block_number = w3.eth.get_block_number()
-    if is_encrypted:
-        coin = mimc7(Field(coin), Field(SALT)).val
+    coin = wallet.derive_coin(Field(amount), context.encrypted)
     nullifier = mimc7(burn_addr.preimage, Field(0)).val
     layers = []
 
@@ -47,19 +43,19 @@ def mint_cmd(network: Network, context: MintContext):
     proof = w3.eth.get_proof(burn_addr.address, [], block_number)
 
     (prefix, state_root, postfix) = get_block_splited_information(block)
-    (layers, root_proof, mid_proofs, last_proof) = get_proof_of_burn(burn_addr, SALT, is_encrypted, block, proof)
+    (layers, root_proof, mid_proofs, last_proof) = get_proof_of_burn(burn_addr, coin.salt.val, context.encrypted, block, proof)
 
     target = context.dst_addr
 
     contract_feed = [
         block_number,
-        coin,
+        coin.get_value(),
         nullifier,
         layers,
         root_proof,
         mid_proofs,
         last_proof,
-        is_encrypted,
+        context.encrypted,
         target,
         prefix,
         state_root,
@@ -85,3 +81,11 @@ def mint_cmd(network: Network, context: MintContext):
     print("Waiting for the receipt...")
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     print("Receipt:", receipt)
+
+    if receipt.status == 0:
+        raise Exception("Transaction failed!")
+
+    # TODO: if save failed, the coin will be lost. Need to fix this.
+    wallet.add_coin(coin)
+    wallet.save()
+    print("Minted successfully!")

@@ -5,13 +5,14 @@ import ast
 from .field import Field
 
 
-def get_spend_proof(salt, balance, withdrawnBalance):
+def get_spend_proof(salt, balance, withdrawnBalance, remainingCoinSalt):
     with io.open("/tmp/input_spend.json", "w") as f:
         json.dump(
             {
                 "balance": str(balance),
                 "salt": str(salt),
                 "withdrawnBalance": str(withdrawnBalance),
+                "remainingCoinSalt": str(remainingCoinSalt),
             },
             f,
         )

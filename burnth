@@ -74,7 +74,7 @@ parser_spend.add_argument(
     required=True,
 )
 parser_spend.add_argument(
-    "--coin-balance", type=float, help=f"Amount burnning coin balance.", required=True
+    "--coin-index", type=int, help=f"Amount index.", required=True
 )
 parser_spend.add_argument(
     "--amount", type=float, help=f"Amount to be spent.", required=True
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     elif args.command == "spend":
         context = SpendContext(
-            args.coin_balance,
+            args.coin_index,
             args.amount,
             args.dst_addr,
             args.priv_sender
