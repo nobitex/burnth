@@ -1,147 +1,18 @@
 #!/usr/bin/python3
 import argparse
-import secrets
-import io
-import os
-import json
-from hashlib import sha256
 
-from web3 import Web3
-import rlp
-
-from zk import mpt_last
-from zk import mpt_path
-from zk import spend
-from zk.mimc7 import mimc7
-from zk.field import Field
 from zk.networks import NETWORKS, DEFAULT_NETWORK
-from hexbytes.main import HexBytes
+from commands import (
+    info_cmd,
+    burn_cmd, BurnContext,
+    mint_cmd, MintContext,
+    spend_cmd, SpendContext,
+)
 
 
 NETWORK = NETWORKS[DEFAULT_NETWORK]
 SYMBOL = "BURNTH"
 
-SALT = 1234
-
-class BurnAddress:
-    def __init__(self, preimage):
-        hashed = mimc7(preimage, preimage).val
-        bts = []
-        for _ in range(20):
-            bts.append(hashed % 256)
-            hashed = hashed // 256
-        self.preimage = preimage
-        self.address = Web3.to_checksum_address("0x" + bytes(bts).hex())
-
-
-class Wallet:
-    def __init__(self, entropy):
-        self.entropy = entropy
-
-    def open_or_create():
-        path = "burnth.priv"
-        if not os.path.isfile(path):
-            wallet = {"entropy": bytes([secrets.randbits(8) for _ in range(32)]).hex()}
-            with io.open(path, "w") as f:
-                json.dump(wallet, f)
-        with io.open(path, "r") as f:
-            return Wallet(bytes.fromhex(json.load(f)["entropy"]))
-
-    def derive_burn_addr(self, index: int) -> BurnAddress:
-        sha_input = self.entropy + index.to_bytes(8, "little")
-        preimage = Field(int.from_bytes(sha256(sha_input).digest()[:31], "little"))
-        return BurnAddress(preimage)
-
-
-def get_block_splited_information(block):
-    hashes = [
-        block.parentHash.hex(),
-        block.sha3Uncles.hex(),
-        block.miner,
-        block.stateRoot.hex(),
-        block.transactionsRoot.hex(),
-        block.receiptsRoot.hex(),
-        block.logsBloom.hex(),
-        hex(block.difficulty),
-        hex(block.number),
-        hex(block.gasLimit),
-        hex(block.gasUsed),
-        hex(block.timestamp),
-        block.extraData.hex(),
-        block.mixHash.hex(),
-        block.nonce.hex()
-    ]
-
-    optional_headers = [
-        "baseFeePerGas",
-        "withdrawalsRoot",
-        "blobGasUsed",
-        "excessBlobGas",
-        "parentBeaconBlockRoot"
-    ]
-
-    for header in optional_headers:
-        if hasattr(block, header):
-            v = getattr(block, header)
-            if isinstance(v, HexBytes):
-                hashes.append(v.hex())
-            elif isinstance(v, int):
-                hashes.append(hex(v))
-            else:
-                hashes.append(v)
-
-    hashes = ["0x" if h == "0x0" else h for h in hashes]
-    header = rlp.encode([Web3.to_bytes(hexstr=h) for h in hashes])
-    assert(Web3.keccak(header) == block.hash)
-
-    start_idx = header.index(bytes(block.stateRoot))
-    end_idx = start_idx + len(bytes(block.stateRoot))
-    prefix = header[:start_idx]
-    postfix = header[end_idx:]
-    commit_top = header[start_idx:end_idx]
-
-    return prefix, commit_top, postfix
-
-
-def get_proof_of_burn(burn_address: BurnAddress, salt, encrypted, block, proof):
-    account_rlp = rlp.encode(
-        [proof.nonce, proof.balance, proof.storageHash, proof.codeHash]
-    )
-    prefix_account_rlp = proof.accountProof[-1][: -len(account_rlp)]
-
-    if Web3.keccak(prefix_account_rlp + account_rlp) not in proof.accountProof[-2]:
-        raise Exception("Not verified!")
-
-    layers = []
-
-    last_proof, last_proof_upper_commit = mpt_last.get_last_proof(
-        salt,
-        encrypted,
-        bytes(prefix_account_rlp),
-        proof.nonce,
-        proof.balance,
-        proof.storageHash,
-        proof.codeHash,
-        burn_address.preimage.val
-    )
-    layers.append(last_proof_upper_commit)
-
-    root_proof = None
-    path_proofs = []
-    rev_proof = proof.accountProof[::-1]
-    for index, level in enumerate(rev_proof):
-        if index == len(rev_proof) - 1:
-            if Web3.keccak(level) != block.stateRoot:
-                raise Exception("Not verified!")
-            root_proof, _ = mpt_path.get_mpt_path_proof(salt, level, block.stateRoot, True)
-        else:
-            if Web3.keccak(level) not in rev_proof[index + 1]:
-                raise Exception("Not verified!")
-            mpt_path_proof, mpt_path_upper_commit = mpt_path.get_mpt_path_proof(salt, level, rev_proof[index + 1], False)
-            path_proofs.append(mpt_path_proof)
-            layers.append(mpt_path_upper_commit)
-
-    return layers, root_proof, path_proofs, last_proof
 
 parser = argparse.ArgumentParser(
     prog="burnth",
@@ -210,150 +81,33 @@ parser_spend.add_argument(
 )
 
 
-args = parser.parse_args()
+if __name__ == "__main__":
+    args = parser.parse_args()
 
-if args.command == "info":
-    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
-    wallet = Wallet.open_or_create()
-    print("Your burn-addresses:")
-    print()
-    i = 0
-    while True:
-        burn_addr = wallet.derive_burn_addr(i).address
-        balance = w3.eth.get_balance(burn_addr)
-        eth = Web3.from_wei(balance, "ether")
-        if eth == 0:
-            break
-        else:
-            print(f"#{i+1}: {burn_addr} ({eth} ETH)")
-            i += 1
-elif args.command == "burn":
-    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
-    wallet = Wallet.open_or_create()
-    for i in range(10):
-        burn_addr = wallet.derive_burn_addr(i).address
-        balance = w3.eth.get_balance(burn_addr)
-        if balance == 0:
-            break
-    ans = input(
-        f"Burning {args.amount} ETH by sending them to {burn_addr}. Are you sure? (Y/n): "
-    )
-    if ans.lower() == "y":
-        gas_price = w3.eth.gas_price
-        amount_wei = Web3.to_wei(args.amount, "ether")
-        acc = w3.eth.account.from_key(args.priv_src)
-        transaction = {
-            "from": acc.address,
-            "to": burn_addr,
-            "value": amount_wei,
-            "nonce": w3.eth.get_transaction_count(acc.address),
-            "gas": 21000,
-            "maxFeePerGas": gas_price,
-            "maxPriorityFeePerGas": gas_price // 2,
-            "chainId": NETWORK.chain_id,
-        }
-        signed = w3.eth.account.sign_transaction(transaction, args.priv_src)
-        tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-        print("Waiting for the receipt...")
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-        print("Receipt:", receipt)
-elif args.command == "mint":
-    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
-    wallet = Wallet.open_or_create()
-    burn_addr = None
-    for i in range(10):
-        if args.src_burn_addr == str(wallet.derive_burn_addr(i).address):
-            burn_addr = wallet.derive_burn_addr(i)
-            coin = w3.eth.get_balance(burn_addr.address)
-            break
+    if args.command == "info":
+        info_cmd(NETWORK)
 
-    if not burn_addr:
-        raise Exception("Burn address not found!")
+    elif args.command == "burn":
+        context = BurnContext(
+            args.amount,
+            args.priv_src
+        )
+        burn_cmd(NETWORK, context)
 
-    is_encrypted = args.encrypted
-    block_number = w3.eth.get_block_number()
-    if is_encrypted:
-        coin = mimc7(Field(coin), Field(SALT)).val
-    nullifier = mimc7(burn_addr.preimage, Field(0)).val
-    layers = []
+    elif args.command == "mint":
+        context = MintContext(
+            args.src_burn_addr,
+            args.dst_addr,
+            args.encrypted,
+            args.priv_fee_payer
+        )
+        mint_cmd(NETWORK, context)
 
-    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
-    block = w3.eth.get_block(block_number)
-    proof = w3.eth.get_proof(burn_addr.address, [], block_number)
-
-    (prefix, state_root, postfix) = get_block_splited_information(block)
-    (layers, root_proof, mid_proofs, last_proof) = get_proof_of_burn(burn_addr, SALT, is_encrypted, block, proof)
-
-    target = args.dst_addr
-
-    contract_feed = [
-        block_number,
-        coin,
-        nullifier,
-        layers,
-        root_proof,
-        mid_proofs,
-        last_proof,
-        is_encrypted,
-        target,
-        prefix,
-        state_root,
-        postfix,
-    ]
-
-    contract = w3.eth.contract(address=NETWORK.burnth_contract_addr, abi=json.load(open("abis/Burnth.abi")))
-    address = w3.eth.account.from_key(args.priv_fee_payer).address
-    nonce = w3.eth.get_transaction_count(address)
-    gas_price = w3.eth.gas_price
-
-    txn = contract.functions.mint(contract_feed).build_transaction({
-        'chainId': NETWORK.chain_id,
-        'gas': 7000000,
-        "maxFeePerGas": gas_price,
-        "maxPriorityFeePerGas": gas_price // 2,
-        'nonce': nonce,
-    })
-
-    signed = w3.eth.account.sign_transaction(txn, args.priv_fee_payer)
-    tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-
-    print("Waiting for the receipt...")
-    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    print("Receipt:", receipt)
-elif args.command == "spend":
-    w3 = Web3(Web3.HTTPProvider(NETWORK.provider_url))
-
-    coin_balance = Web3.to_wei(args.coin_balance, "ether")
-    coin = mimc7(Field(coin_balance), Field(SALT)).val
-    widthdrawn_amount = Web3.to_wei(args.amount, "ether")
-    remaining_balance = coin_balance - widthdrawn_amount
-    remaining_coin = mimc7(Field(remaining_balance), Field(SALT)).val
-    proof = spend.get_spend_proof(SALT, coin_balance, widthdrawn_amount)
-
-    contract_feed = [
-        coin,
-        remaining_coin,
-        widthdrawn_amount,
-        args.dst_addr,
-        proof,
-    ]
-
-    contract = w3.eth.contract(address=NETWORK.burnth_contract_addr, abi=json.load(open("abis/Burnth.abi")))
-    address = w3.eth.account.from_key(args.priv_sender).address
-    nonce = w3.eth.get_transaction_count(address)
-    gas_price = w3.eth.gas_price
-
-    txn = contract.functions.spend(*contract_feed).build_transaction({
-        'chainId': NETWORK.chain_id,
-        'gas': 7000000,
-        "maxFeePerGas": gas_price,
-        "maxPriorityFeePerGas": gas_price // 2,
-        'nonce': nonce,
-    })
-
-    signed = w3.eth.account.sign_transaction(txn, args.priv_sender)
-    tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-
-    print("Waiting for the receipt...")
-    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    print("Receipt:", receipt)
+    elif args.command == "spend":
+        context = SpendContext(
+            args.coin_balance,
+            args.amount,
+            args.dst_addr,
+            args.priv_sender
+        )
+        spend_cmd(NETWORK, context)
