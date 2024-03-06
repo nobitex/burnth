@@ -28,14 +28,14 @@ sudo npm install -g snarkjs
 Here you can find the installation guide of circom: https://docs.circom.io/getting-started/installation/
 
 1. Clone the `burnth` repository, `cd` into it, and then perform a `make` to download the trusted-setup params:
-```
-git clone https://github.com/nobitex/burnth && cd burnth
-make
-```
+
+    ```
+    git clone https://github.com/nobitex/burnth && cd burnth
+    make
+    ```
 2. You'll also need to have the some python package installed on your system:
-```
-sudo pip3 install -r requirements.txt
-```
+
+    `sudo pip3 install -r requirements.txt`
 
 3. Burn your ETH:
 
@@ -69,7 +69,7 @@ Our Modified-Merkle-Patricia-Trie-Proof-Verifier consists of 3 R1CS circuits, as
 
 There is also an extra Spend circuit, allowing you to partially mint your burnt amounts, ***without exposing the remaining amounts!***
 
-***The parameter files are approximately 500MB and it takes aroung 1 minute to generate a single proof of burn.***
+***The parameter files are approximately 500MB and it takes around 1 minute to generate a single proof of burn.***
 
 ## License
 
