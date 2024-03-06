@@ -45,14 +45,14 @@ Here you can find the installation guide of circom: https://docs.circom.io/getti
 
 4. Check your burnt amounts:
 
-    `burnth info`
+    `./burnth info`
 
 5. Mint your BURNTH:
 
     `./burnth mint --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --src-burn-addr [THE BURN-ADDRESS YOU WANT TO CONSUME]`
 
     It's important to use a different account for paying the minting gas fees, otherwise, the burner's identity would be revealed.
-6. Congrats! Your BURNTH should now be in your wallet!
+6. Congrats! Your BURNTH should now be in your wallet! Find it in your MetaMask wallet: the token contract address of BURNTH on Sepolia testnet is: `0x98F5594BdE9d5D3c214457A232F527f8Ae0bafE4`
 
 ## The circuit
 
