@@ -1,6 +1,6 @@
 # Compiler files
 cache/
-out/
+/out/
 
 # Ignores development broadcast logs
 !/broadcast
@@ -18,8 +18,6 @@ burnth.priv
 *__pycache__*
 
 *.ptau
-*.r1cs
-*.sym
 circuit/*.json
 circuit/mpt_first_*
 circuit/mpt_path_*
