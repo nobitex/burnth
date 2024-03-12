@@ -7,6 +7,7 @@ from commands import (
     burn_cmd, BurnContext,
     mint_cmd, MintContext,
     spend_cmd, SpendContext,
+    ui_cmd,
 )
 
 
@@ -83,9 +84,13 @@ parser_spend.add_argument(
     "--amount", type=float, help=f"Amount to be spent.", required=True
 )
 
+parser_ui = subparsers.add_parser("ui", help=f"Open web interface!", allow_abbrev=False)
 
 if __name__ == "__main__":
     args = parser.parse_args()
+
+    if args.command == 'ui':
+        ui_cmd(NETWORK)
 
     if args.command == "info":
         context = InfoContext(
