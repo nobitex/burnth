@@ -29,7 +29,9 @@ def spend_cmd(network: Network, context: SpendContext):
     widthdrawn_amount = Web3.to_wei(context.amount, "ether")
     remaining_balance = coin_balance - widthdrawn_amount
     remaining_coin = wallet.derive_coin(Field(remaining_balance), encrypted=True)
-    proof = spend.get_spend_proof(coin.salt.val, coin_balance, widthdrawn_amount, remaining_coin.salt.val)
+    proof = spend.get_spend_proof(
+        coin.salt.val, coin_balance, widthdrawn_amount, remaining_coin.salt.val
+    )
 
     contract_feed = [
         coin.get_value(),
@@ -39,18 +41,22 @@ def spend_cmd(network: Network, context: SpendContext):
         proof,
     ]
 
-    contract = w3.eth.contract(address=network.burnth_contract_addr, abi=json.load(open("abis/Burnth.abi")))
+    contract = w3.eth.contract(
+        address=network.burnth_contract_addr, abi=json.load(open("abis/Burnth.abi"))
+    )
     address = w3.eth.account.from_key(context.priv_sender).address
     nonce = w3.eth.get_transaction_count(address)
     gas_price = w3.eth.gas_price
 
-    txn = contract.functions.spend(*contract_feed).build_transaction({
-        'chainId': network.chain_id,
-        'gas': 7000000,
-        "maxFeePerGas": gas_price,
-        "maxPriorityFeePerGas": gas_price // 2,
-        'nonce': nonce,
-    })
+    txn = contract.functions.spend(*contract_feed).build_transaction(
+        {
+            "chainId": network.chain_id,
+            "gas": 7000000,
+            "maxFeePerGas": gas_price,
+            "maxPriorityFeePerGas": gas_price // 2,
+            "nonce": nonce,
+        }
+    )
 
     signed = w3.eth.account.sign_transaction(txn, context.priv_sender)
     tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
