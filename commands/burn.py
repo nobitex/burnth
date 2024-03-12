@@ -2,6 +2,7 @@ from web3 import Web3
 from zk.models import Wallet
 from zk.networks import Network
 
+
 class BurnContext:
     amount: float
     priv_src: str

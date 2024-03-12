@@ -25,10 +25,10 @@ contract Burnth is ERC20 {
         bool isEncrypted;
         address target;
         bytes32 state_root;
-        uint256[] layers; 
-        Groth16Proof[] midProofs; 
-        bytes header_prefix; 
-        bytes header_postfix; 
+        uint256[] layers;
+        Groth16Proof[] midProofs;
+        bytes header_prefix;
+        bytes header_postfix;
     }
 
     SpendVerifier spend_verifier = new SpendVerifier();

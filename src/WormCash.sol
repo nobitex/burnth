@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+
 contract WormCash is ERC20 {
     IERC20 burnth_contract;
     uint256 starting_block;
@@ -22,10 +23,7 @@ contract WormCash is ERC20 {
         return (block.number - starting_block) / BLOCK_PER_EPOCH;
     }
 
-    function approximate(
-        uint256 amount_per_epoch,
-        uint256 num_epochs
-    ) public view returns (uint256) {
+    function approximate(uint256 amount_per_epoch, uint256 num_epochs) public view returns (uint256) {
         uint256 mint_amount = 0;
         uint256 currEpoch = currentEpoch();
         for (uint256 i = 0; i < num_epochs; i++) {
@@ -45,27 +43,17 @@ contract WormCash is ERC20 {
         return reward;
     }
 
-    function participate(
-        uint256 amount_per_epoch,
-        uint256 num_epochs
-    ) external {
+    function participate(uint256 amount_per_epoch, uint256 num_epochs) external {
         uint256 currEpoch = currentEpoch();
         for (uint256 i = 0; i < num_epochs; i++) {
             epoch_totals[currEpoch + i] += amount_per_epoch;
             epochs[currEpoch + i][msg.sender] += amount_per_epoch;
         }
-        burnth_contract.transferFrom(
-            msg.sender,
-            address(this),
-            num_epochs * amount_per_epoch
-        ); // TODO: Handle exception
+        burnth_contract.transferFrom(msg.sender, address(this), num_epochs * amount_per_epoch); // TODO: Handle exception
     }
 
     function claim(uint256 starting_epoch, uint256 num_epochs) external {
-        require(
-            starting_epoch + num_epochs <= currentEpoch(),
-            "Cannot claim an ongoing epoch!"
-        );
+        require(starting_epoch + num_epochs <= currentEpoch(), "Cannot claim an ongoing epoch!");
         uint256 mint_amount = 0;
         for (uint256 i = 0; i < num_epochs; i++) {
             uint256 total = epoch_totals[starting_epoch + i];
