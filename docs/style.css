@@ -1,0 +1,67 @@
+
+#separator {
+    float: left;
+    border-left: 1px solid #eee;
+    height: 100vh;
+    width: 0.01vw;
+}
+
+#content-burn {
+    width: 49.9vw;
+    padding-top: 10vh;
+    font-family: 'JetBrains Mono', monospace;
+    float: left;
+}
+
+#content-mint {
+    width: 49.9vw;
+    padding-top: 10vh;
+    font-family: 'JetBrains Mono', monospace;
+    float: left;
+}
+
+#logo {
+    margin-top: 6vh;
+    display: block;
+    margin: 3vh auto;
+    height: 40vh;
+}
+
+#burn-btn {
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    background-color: white;
+    border: 5px solid #ef7616;
+    color: #ef7616;
+    font-size: 1.4em;
+    padding: 1em;
+    text-decoration: none;
+    margin: 1em;
+    display: inline-block;
+}
+
+#burn-btn:hover {
+    background-color: #ef7616;
+    color: white;
+    cursor: pointer;
+}
+
+
+#mint-btn {
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    background-color: white;
+    border: 5px solid #416D19;
+    color: #416D19;
+    font-size: 1.4em;
+    padding: 1em;
+    text-decoration: none;
+    margin: 1em;
+    display: inline-block;
+}
+
+#mint-btn:hover {
+    background-color: #416D19;
+    color: white;
+    cursor: pointer;
+}
