@@ -30,7 +30,7 @@ gen_mpt_path_witness:
 	mv circuit/output.json /tmp/output_mpt_path.json
 
 gen_mpt_path_proof:
-	cd circuit && snarkjs groth16 prove mpt_path_0001.zkey mpt_path_witness.wtns mpt_path_proof.json mpt_path_public.json
+	cd circuit && ../../rapidsnark/package/bin/prover mpt_path_0001.zkey mpt_path_witness.wtns mpt_path_proof.json mpt_path_public.json
 	snarkjs generatecall circuit/mpt_path_public.json circuit/mpt_path_proof.json > /tmp/mpt_path_proof.json 
 
 gen_mpt_path_solidity: circuit/mpt_path_0001.zkey
@@ -62,7 +62,7 @@ gen_mpt_last_witness:
 	mv circuit/output.json /tmp/output_mpt_last.json
 
 gen_mpt_last_proof:
-	cd circuit && snarkjs groth16 prove mpt_last_0001.zkey mpt_last_witness.wtns mpt_last_proof.json mpt_last_public.json
+	cd circuit && ../../rapidsnark/package/bin/prover mpt_last_0001.zkey mpt_last_witness.wtns mpt_last_proof.json mpt_last_public.json
 	snarkjs generatecall circuit/mpt_last_public.json circuit/mpt_last_proof.json > /tmp/mpt_last_proof.json 
 
 gen_mpt_last_solidity: circuit/mpt_last_0001.zkey
@@ -94,7 +94,7 @@ gen_spend_witness: circuit/out/spend_cpp/spend
 	mv circuit/output.json /tmp/output_spend.json
 
 gen_spend_proof:
-	cd circuit && snarkjs groth16 prove spend_0001.zkey spend_witness.wtns spend_proof.json spend_public.json
+	cd circuit && ../../rapidsnark/package/bin/prover spend_0001.zkey spend_witness.wtns spend_proof.json spend_public.json
 	snarkjs generatecall circuit/spend_public.json circuit/spend_proof.json > /tmp/spend_proof.json 
 
 gen_spend_solidity: circuit/spend_0001.zkey

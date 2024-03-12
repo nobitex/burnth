@@ -3,10 +3,14 @@ import argparse
 
 from zk.networks import NETWORKS, DEFAULT_NETWORK
 from commands import (
-    info_cmd, InfoContext,
-    burn_cmd, BurnContext,
-    mint_cmd, MintContext,
-    spend_cmd, SpendContext,
+    info_cmd,
+    InfoContext,
+    burn_cmd,
+    BurnContext,
+    mint_cmd,
+    MintContext,
+    spend_cmd,
+    SpendContext,
 )
 
 
@@ -63,7 +67,9 @@ parser_mint.add_argument(
     required=False,
 )
 
-parser_spend = subparsers.add_parser("spend", help=f"spend {SYMBOL}!", allow_abbrev=False)
+parser_spend = subparsers.add_parser(
+    "spend", help=f"spend {SYMBOL}!", allow_abbrev=False
+)
 parser_spend.add_argument(
     "--priv-sender",
     type=str,
@@ -88,32 +94,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.command == "info":
-        context = InfoContext(
-            args.priv_src
-        )
+        context = InfoContext(args.priv_src)
         info_cmd(NETWORK, context)
 
     elif args.command == "burn":
-        context = BurnContext(
-            args.amount,
-            args.priv_src
-        )
+        context = BurnContext(args.amount, args.priv_src)
         burn_cmd(NETWORK, context)
 
     elif args.command == "mint":
         context = MintContext(
-            args.src_burn_addr,
-            args.dst_addr,
-            args.encrypted,
-            args.priv_fee_payer
+            args.src_burn_addr, args.dst_addr, args.encrypted, args.priv_fee_payer
         )
         mint_cmd(NETWORK, context)
 
     elif args.command == "spend":
         context = SpendContext(
-            args.coin_index,
-            args.amount,
-            args.dst_addr,
-            args.priv_sender
+            args.coin_index, args.amount, args.dst_addr, args.priv_sender
         )
         spend_cmd(NETWORK, context)

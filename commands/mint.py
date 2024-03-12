@@ -56,14 +56,14 @@ def mint_cmd(network: Network, context: MintContext):
         block_number,
         coin.get_value(),
         nullifier,
+        layers,
         root_proof,
+        mid_proofs,
         last_proof,
         context.encrypted,
         target,
-        state_root,
-        layers,
-        mid_proofs,
         prefix,
+        state_root,
         postfix,
     ]
 
