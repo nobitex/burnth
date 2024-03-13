@@ -30,22 +30,24 @@ class Coin:
         if self.encrypted:
             return mimc7(self.amount, self.salt).val
         return self.amount.val
-    
+
     @staticmethod
     def load_from_dict(d):
-        return Coin(Field(int(d["amount"], 16)), Field(int(d["salt"], 16)), d["encrypted"])
-    
+        return Coin(
+            Field(int(d["amount"], 16)), Field(int(d["salt"], 16)), d["encrypted"]
+        )
+
     def to_dict(self):
         return {
             "amount": hex(self.amount.val),
             "salt": hex(self.salt.val),
-            "encrypted": self.encrypted
+            "encrypted": self.encrypted,
         }
 
 
 class Wallet:
     PATH = "burnth.priv"
-    
+
     def __init__(self, entropy):
         self.entropy = entropy
         self.coins = self.load_coins()
@@ -68,7 +70,7 @@ class Wallet:
         sha_input = self.entropy + index.to_bytes(8, "little")
         preimage = Field(int.from_bytes(sha256(sha_input).digest()[:31], "little"))
         return BurnAddress(preimage)
-    
+
     def derive_coin(self, amount: Field, encrypted: bool) -> Coin:
         salt = Field(random.randint(0, 2**256))
         return Coin(amount, salt, encrypted)
@@ -81,4 +83,10 @@ class Wallet:
 
     def save(self):
         with io.open(Wallet.PATH, "w") as f:
-            json.dump({"entropy": self.entropy.hex(), "coins": [coin.to_dict() for coin in self.coins]}, f)
+            json.dump(
+                {
+                    "entropy": self.entropy.hex(),
+                    "coins": [coin.to_dict() for coin in self.coins],
+                },
+                f,
+            )

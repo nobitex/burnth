@@ -26,17 +26,20 @@ def info_cmd(network: Network, context: InfoContext):
         else:
             print(f"#{i+1}: {burn_addr} ({eth} ETH)")
             i += 1
-    
+
     for idx, coin in enumerate(wallet.coins):
         if idx == 0:
             print("Your coins:")
 
         amount = Web3.from_wei(coin.amount.val, "ether")
         print(f"[IDX: {idx+1}] Amount: {amount} ETH | Salt: {coin.salt.val}")
-    
+
     if context.priv_src:
         contract = w3.eth.contract(
             address=network.burnth_contract_addr, abi=json.load(open("abis/Burnth.abi"))
         )
         address = w3.eth.account.from_key(context.priv_src).address
-        print("Your BURNTH balance:", Web3.from_wei(contract.functions.balanceOf(address).call(), "ether"))
+        print(
+            "Your BURNTH balance:",
+            Web3.from_wei(contract.functions.balanceOf(address).call(), "ether"),
+        )
