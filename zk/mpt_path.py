@@ -6,21 +6,25 @@ import io
 from .field import Field
 
 
-def get_mpt_path_proof(salt, lower, upper, is_top):
+def get_mpt_path_proof(salt, layers, is_top):
     MAX_BLOCKS = 4
-    numLowerLayerBytes = len(lower)
-    numUpperLayerBytes = len(upper)
-    lowerLayer = list(lower) + (MAX_BLOCKS * 136 - len(lower)) * [0]
-    upperLayer = list(upper) + (MAX_BLOCKS * 136 - len(upper)) * [0]
+    MAX_LAYERS = 4
+
+    num_layers = len(layers)
+
+    while len(layers) < MAX_LAYERS:
+        layers.append([])
+
+    numLayerBytes = [len(l) for l in layers]
+    layers = [list(l) + (MAX_BLOCKS * 136 - len(l)) * [0] for l in layers]
 
     with io.open("/tmp/input_mpt_path.json", "w") as f:
         json.dump(
             {
                 "salt": str(salt),
-                "numLowerLayerBytes": numLowerLayerBytes,
-                "numUpperLayerBytes": 1 if is_top else numUpperLayerBytes,
-                "lowerLayerBytes": lowerLayer,
-                "upperLayerBytes": [0] * MAX_BLOCKS * 136 if is_top else upperLayer,
+                "numLayers": num_layers - 1,
+                "numLayerBytes": numLayerBytes,
+                "layerBytes": layers,
                 "isTop": 1 if is_top else 0,
             },
             f,

@@ -117,4 +117,4 @@ template KeccakLayerChecker(maxBlocks, maxLayers) {
     commitUpper <== commiterUpper.commit + isTop * (lowerLayerHash - commiterUpper.commit);
 }
 
-component main = KeccakLayerChecker(1, 3);
+component main = KeccakLayerChecker(4, 4);
