@@ -5,6 +5,7 @@ include "./utils/hasher.circom";
 include "./utils/keccak/keccak.circom";
 include "./utils/hashbytes.circom";
 include "./utils/rlp.circom";
+include "./commit.circom";
 
 template HashAddress() {
     signal input address[20];
@@ -150,16 +151,11 @@ template MptLast(maxBlocks, maxLowerLen, security) {
         }
     }
 
-    // Commit to upperLayer
-    component hasherUpper = HashBytes(maxBlocks * 136, 31);
-    hasherUpper.inp <== upperLayerBytes;
-    component commitUpperToBlocks = Hasher();
-    commitUpperToBlocks.left <== hasherUpper.out;
-    commitUpperToBlocks.right <== upperLayerBytesLen;
-    component commitUpperToSalt = Hasher();
-    commitUpperToSalt.left <== commitUpperToBlocks.hash;
-    commitUpperToSalt.right <== salt;
-    commitUpper <== commitUpperToSalt.hash;
+    component commiterUpper = CommitLayer(maxBlocks);
+    commiterUpper.numLayerBytes <== upperLayerBytesLen;
+    commiterUpper.layerBytes <== upperLayerBytes;
+    commiterUpper.salt <== salt;
+    commitUpper <== commiterUpper.commit;
  }
 
  component main {public [encrypted]} = MptLast(4, 99, 20);

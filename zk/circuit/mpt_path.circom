@@ -6,42 +6,8 @@ include "./utils/hasher.circom";
 include "./utils/padding.circom";
 include "./utils/hashbytes.circom";
 include "./utils/utils.circom";
-
-template MaskGen(n) {
-    signal input ind;
-    signal output out[n];
-
-    signal eqs[n+1];
-    eqs[0] <== 1;
-    component eqcomps[n];
-    for(var i = 0; i < n; i++) {
-        eqcomps[i] = IsEqual();
-        eqcomps[i].in[0] <== i;
-        eqcomps[i].in[1] <== ind;
-        eqs[i+1] <== eqs[i] * (1 - eqcomps[i].out);
-    }
-
-    for(var i = 0; i < n; i++) {
-        out[i] <== eqs[i+1];
-    }
-}
-
-template CommitLayer(maxBlocks) {
-    signal input numLayerBytes;
-    signal input layerBytes[maxBlocks * 136];
-    signal input salt;
-    signal output commit;
-
-    component hasherLower = HashBytes(maxBlocks * 136, 31);
-    hasherLower.inp <== layerBytes;
-    component commitToLen = Hasher();
-    commitToLen.left <== hasherLower.out;
-    commitToLen.right <== numLayerBytes;
-    component commitToLenSalt = Hasher();
-    commitToLenSalt.left <== commitToLen.hash;
-    commitToLenSalt.right <== salt;
-    commit <== commitToLenSalt.hash;
-}
+include "./utils/mask.circom";
+include "./commit.circom";
 
 template KeccakLayerChecker(maxBlocks, maxLayers) {
     signal input isTop;
@@ -89,11 +55,6 @@ template KeccakLayerChecker(maxBlocks, maxLayers) {
     commiterLower.salt <== salt;
     commitLower <== commiterLower.commit;
 
-    signal lowerLayerHash;
-    component bits2num = Bits2NumBigendian(32 * 8);
-    bits2num.in <== keccakers[0].out;
-    lowerLayerHash <== bits2num.out;
-
     signal selectedLayerBytes[maxBlocks * 136];
     signal numSelectedLayerBytes;
     component selectors[maxBlocks * 136];
@@ -110,6 +71,22 @@ template KeccakLayerChecker(maxBlocks, maxLayers) {
     numBytesSelectors.select <== numLayers;
     numSelectedLayerBytes <== numBytesSelectors.out;
 
+    component keccakSelectors[32 * 8];
+    signal selectedLayerKeccak[32 * 8];
+    for(var i = 0; i < 32 * 8; i++) {
+        keccakSelectors[i] = Selector(maxLayers - 1);
+        for(var j = 0; j < maxLayers - 1; j++) {
+            keccakSelectors[i].vals[j] <== keccakers[j].out[i];
+        }
+        keccakSelectors[i].select <== numLayers;
+        selectedLayerKeccak[i] <== keccakSelectors[i].out;
+    }
+
+    signal lowerLayerHash;
+    component bits2num = Bits2NumBigendian(32 * 8);
+    bits2num.in <== selectedLayerKeccak;
+    lowerLayerHash <== bits2num.out;
+
     component commiterUpper = CommitLayer(maxBlocks);
     commiterUpper.numLayerBytes <== numSelectedLayerBytes;
     commiterUpper.layerBytes <== selectedLayerBytes;
@@ -117,4 +94,4 @@ template KeccakLayerChecker(maxBlocks, maxLayers) {
     commitUpper <== commiterUpper.commit + isTop * (lowerLayerHash - commiterUpper.commit);
 }
 
-component main = KeccakLayerChecker(4, 4);
+component main = KeccakLayerChecker(1, 3);
