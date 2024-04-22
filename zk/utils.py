@@ -22,7 +22,7 @@ def get_block_splited_information(block):
         hex(block.timestamp),
         block.extraData.hex(),
         block.mixHash.hex(),
-        block.nonce.hex()
+        block.nonce.hex(),
     ]
 
     optional_headers = [
@@ -30,7 +30,7 @@ def get_block_splited_information(block):
         "withdrawalsRoot",
         "blobGasUsed",
         "excessBlobGas",
-        "parentBeaconBlockRoot"
+        "parentBeaconBlockRoot",
     ]
 
     for header in optional_headers:
@@ -45,7 +45,7 @@ def get_block_splited_information(block):
 
     hashes = ["0x" if h == "0x0" else h for h in hashes]
     header = rlp.encode([Web3.to_bytes(hexstr=h) for h in hashes])
-    assert(Web3.keccak(header) == block.hash)
+    assert Web3.keccak(header) == block.hash
 
     start_idx = header.index(bytes(block.stateRoot))
     end_idx = start_idx + len(bytes(block.stateRoot))
@@ -75,7 +75,7 @@ def get_proof_of_burn(burn_address: BurnAddress, salt, encrypted, block, proof):
         proof.balance,
         proof.storageHash,
         proof.codeHash,
-        burn_address.preimage.val
+        burn_address.preimage.val,
     )
     layers.append(last_proof_upper_commit)
 
@@ -86,11 +86,15 @@ def get_proof_of_burn(burn_address: BurnAddress, salt, encrypted, block, proof):
         if index == len(rev_proof) - 1:
             if Web3.keccak(level) != block.stateRoot:
                 raise Exception("Not verified!")
-            root_proof, _ = mpt_path.get_mpt_path_proof(salt, level, block.stateRoot, True)
+            root_proof, _ = mpt_path.get_mpt_path_proof(
+                salt, level, block.stateRoot, True
+            )
         else:
             if Web3.keccak(level) not in rev_proof[index + 1]:
                 raise Exception("Not verified!")
-            mpt_path_proof, mpt_path_upper_commit = mpt_path.get_mpt_path_proof(salt, level, rev_proof[index + 1], False)
+            mpt_path_proof, mpt_path_upper_commit = mpt_path.get_mpt_path_proof(
+                salt, level, rev_proof[index + 1], False
+            )
             path_proofs.append(mpt_path_proof)
             layers.append(mpt_path_upper_commit)
 
