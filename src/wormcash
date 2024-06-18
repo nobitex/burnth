@@ -1,0 +1,114 @@
+#!/usr/bin/python3
+import argparse
+from zk.networks import NETWORKS
+from commands.worm_cash import (
+    info_cmd,
+    InfoContext,
+    participate_cmd,
+    ParticipateContext,
+    claim_cmd,
+    ClaimContext,
+)
+
+# Argument parser setup
+parser = argparse.ArgumentParser(
+    prog="wormcash",
+    description="WormCash miner!",
+    epilog="By Nobitex Labs - https://labs.nobitex.ir",
+)
+
+subparsers = parser.add_subparsers(
+    help="WormCash commands", dest="command", required=True
+)
+
+# Info command
+parser_info = subparsers.add_parser(
+    "info", help="Information about your wallet!", allow_abbrev=False
+)
+parser_info.add_argument(
+    "--priv-src", type=str, help="Private key of the source account.", required=True
+)
+parser_info.add_argument(
+    "--network",
+    type=str,
+    choices=NETWORKS.keys(),
+    required=True,
+    help="Select the network to use.",
+)
+parser_info.add_argument(
+    "--amount-per-epoch",
+    type=float,
+    required=False,
+    help="Amount to be burnt per epoch.",
+)
+
+parser_info.add_argument(
+    "--num-epochs", type=int, help="Number of epochs.", required=False
+)
+
+# Participate command
+parser_participate = subparsers.add_parser(
+    "participate",
+    help="Participate in WRM generation by consuming your BURNTH!",
+    allow_abbrev=False,
+)
+parser_participate.add_argument(
+    "--priv-src", type=str, help="Private key of the source account.", required=True
+)
+parser_participate.add_argument(
+    "--amount-per-epoch",
+    type=float,
+    help="Amount to be burnt per epoch.",
+    required=True,
+)
+parser_participate.add_argument(
+    "--num-epochs", type=int, help="Number of epochs.", required=True
+)
+parser_participate.add_argument(
+    "--network",
+    type=str,
+    choices=NETWORKS.keys(),
+    required=True,
+    help="Select the network to use.",
+)
+
+# Claim command
+parser_claim = subparsers.add_parser(
+    "claim", help="Claim your WRM!", allow_abbrev=False
+)
+parser_claim.add_argument(
+    "--priv-src", type=str, help="Private key of the source account.", required=True
+)
+parser_claim.add_argument(
+    "--starting-epoch",
+    type=int,
+    help="Epoch from which your claims start.",
+    required=True,
+)
+parser_claim.add_argument(
+    "--num-epochs", type=int, help="Number of epochs to be claimed.", required=True
+)
+parser_claim.add_argument(
+    "--network",
+    type=str,
+    choices=NETWORKS.keys(),
+    required=True,
+    help="Select the network to use.",
+)
+
+# Main function to execute commands
+if __name__ == "__main__":
+    args = parser.parse_args()
+    NETWORK = NETWORKS[args.network]
+
+    if args.command == "info":
+        context = InfoContext(args.amount_per_epoch, args.num_epochs, args.priv_src)
+        info_cmd(NETWORK, context)
+    elif args.command == "participate":
+        context = ParticipateContext(
+            args.amount_per_epoch, args.num_epochs, args.priv_src
+        )
+        participate_cmd(NETWORK, context)
+    elif args.command == "claim":
+        context = ClaimContext(args.starting_epoch, args.num_epochs, args.priv_src)
+        claim_cmd(NETWORK, context)
