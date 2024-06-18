@@ -1,0 +1,17 @@
+circuit/*_cpp
+circuit/*_js
+circuit/*.json
+circuit/*.zkey
+circuit/*.wtns
+
+*.o
+*.sym
+*.r1cs
+
+mpt_last_js
+mpt_path_js
+spend_js
+
+circuit/out/mpt_last_cpp/mpt_last
+circuit/out/mpt_path_cpp/mpt_path
+circuit/out/spend_cpp/spend
