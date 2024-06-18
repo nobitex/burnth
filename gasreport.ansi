@@ -1,0 +1,21 @@
+installing solc version "0.8.25"
+Successfully installed solc 0.8.25
+Compiling 1 files with 0.8.25
+Solc 0.8.25 finished in 1.29s
+Compiler run [32msuccessful![0m
+
+Running 1 test for test/Burnth.t.sol:BurnthTest
+[32m[PASS][0m testDeployment() (gas: 14427)
+Test result: [32mok[0m. [32m1[0m passed; [31m0[0m failed; [33m0[0m skipped; finished in 613.89µs
+| src/contracts/Burnth.sol:Burnth contract |                 |      |        |      |         |
+|------------------------------------------|-----------------|------|--------|------|---------|
+| Deployment Cost                          | Deployment Size |      |        |      |         |
+| 2184958                                  | 10705           |      |        |      |         |
+| Function Name                            | min             | avg  | median | max  | # calls |
+| name                                     | 3178            | 3178 | 3178   | 3178 | 1       |
+| symbol                                   | 3222            | 3222 | 3222   | 3222 | 1       |
+
+
+
+ 
+Ran 1 test suites: [32m1[0m tests passed, [31m0[0m failed, [33m0[0m skipped (1 total tests)
