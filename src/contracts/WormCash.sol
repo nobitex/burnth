@@ -113,7 +113,7 @@ contract WormCash is ERC20 {
             uint256 total = epoch_totals[starting_epoch + i];
             if (total > 0) {
                 uint256 user = epochs[starting_epoch + i][msg.sender];
-                epochs[i][msg.sender] = 0;
+                epochs[starting_epoch + i][msg.sender] = 0;
                 mint_amount += (rewardOf(starting_epoch + i) * user) / total;
             }
         }
