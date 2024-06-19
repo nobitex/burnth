@@ -22,7 +22,9 @@ class ClaimContext:
 def claim_cmd(network, context):
     w3 = Web3(Web3.HTTPProvider(network.provider_url))
     contract = w3.eth.contract(address=network.wormcash_contract_addr, abi=ABI_WORMCASH)
-    ans = input(f"Claiming WRM of {context.num_epochs} epochs. Are you sure? (Y/n): ")
+    current_epoch = contract.functions.currentEpoch().call()
+    print("currect epoch: ", current_epoch)
+    ans = input(f"Claiming WRM of {context.num_epochs} epochs. Are you sure? (Y/n): ")   
 
     if ans.lower() == "y":
         address = w3.eth.account.from_key(context.priv_src).address
