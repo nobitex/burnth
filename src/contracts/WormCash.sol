@@ -35,20 +35,20 @@ contract WormCash is ERC20 {
      *
      * @dev This function calculates the approximate mint amount based on the user's participation and the total participation in each epoch.
      *
-     * @param amount_per_epoch The amount the user plans to participate per epoch.
-     * @param num_epochs The number of epochs the user plans to participate in.
+     * @param _amount_per_epoch The amount the user plans to participate per epoch.
+     * @param _num_epochs The number of epochs the user plans to participate in.
      * @return The approximate amount of tokens that can be minted.
      */
     function approximate(
-        uint256 amount_per_epoch,
-        uint256 num_epochs
+        uint256 _amount_per_epoch,
+        uint256 _num_epochs
     ) public view returns (uint256) {
         uint256 mint_amount = 0;
         uint256 currEpoch = currentEpoch();
-        for (uint256 i = 0; i < num_epochs; i++) {
+        for (uint256 i = 0; i < _num_epochs; i++) {
             uint256 epochIndex = currEpoch + i;
-            uint256 user = epochs[epochIndex][msg.sender] + amount_per_epoch;
-            uint256 total = epoch_totals[epochIndex] + amount_per_epoch;
+            uint256 user = epochs[epochIndex][msg.sender] + _amount_per_epoch;
+            uint256 total = epoch_totals[epochIndex] + _amount_per_epoch;
             mint_amount += (rewardOf(epochIndex) * user) / total;
         }
         return mint_amount;
@@ -75,48 +75,61 @@ contract WormCash is ERC20 {
      *
      * @dev This function updates the user's participation in the specified number of epochs and transfers the required amount of Burnth tokens to the contract.
      *
-     * @param amount_per_epoch The amount of tokens to lock per epoch.
-     * @param num_epochs The number of epochs to participate in.
+     * @param _amount_per_epoch The amount of tokens to lock per epoch.
+     * @param _num_epochs The number of epochs to participate in.
      */
     function participate(
-        uint256 amount_per_epoch,
-        uint256 num_epochs
+        uint256 _amount_per_epoch,
+        uint256 _num_epochs
     ) external {
-        require(num_epochs != 0, "Invalid epoch number.");
+        require(_num_epochs != 0, "Invalid epoch number.");
         uint256 currEpoch = currentEpoch();
-        for (uint256 i = 0; i < num_epochs; i++) {
-            epoch_totals[currEpoch + i] += amount_per_epoch;
-            epochs[currEpoch + i][msg.sender] += amount_per_epoch;
+        for (uint256 i = 0; i < _num_epochs; i++) {
+            epoch_totals[currEpoch + i] += _amount_per_epoch;
+            epochs[currEpoch + i][msg.sender] += _amount_per_epoch;
         }
         burnth_contract.transferFrom(
             msg.sender,
             address(this),
-            num_epochs * amount_per_epoch
+            _num_epochs * _amount_per_epoch
         );
     }
 
     /**
+     * @notice Allows a user to get the claim amount of their rewards for participation in past epochs.
+     *
+     * @dev This function calculates and mints the reward based on the user's participation and the total participation in each epoch.
+     *
+     * @param _starting_epoch The starting epoch number from which to claim rewards.
+     * @param _num_epochs The number of epochs to claim rewards for.
+     * @param _user The user address.
+     */
+    function calculateMintAmount(uint256 _starting_epoch, uint256 _num_epochs, address _user) public view returns(uint256){
+        require(
+            _starting_epoch + _num_epochs <= currentEpoch(),
+            "Cannot claim an ongoing epoch!"
+        );
+        uint256 mint_amount = 0;
+        for (uint256 i = 0; i < _num_epochs; i++) {
+            uint256 total = epoch_totals[_starting_epoch + i];
+            if (total > 0) {
+                uint256 user = epochs[_starting_epoch + i][_user];
+                mint_amount += (rewardOf(_starting_epoch + i) * user) / total;
+            }
+        }
+        return mint_amount;
+    }
+
+        /**
      * @notice Allows a user to claim their rewards for participation in past epochs.
      *
      * @dev This function calculates and mints the reward based on the user's participation and the total participation in each epoch.
      *
-     * @param starting_epoch The starting epoch number from which to claim rewards.
-     * @param num_epochs The number of epochs to claim rewards for.
+     * @param _starting_epoch The starting epoch number from which to claim rewards.
+     * @param _num_epochs The number of epochs to claim rewards for.
      */
-    function claim(uint256 starting_epoch, uint256 num_epochs) external returns(uint256){
-        require(
-            starting_epoch + num_epochs <= currentEpoch(),
-            "Cannot claim an ongoing epoch!"
-        );
-        uint256 mint_amount = 0;
-        for (uint256 i = 0; i < num_epochs; i++) {
-            uint256 total = epoch_totals[starting_epoch + i];
-            if (total > 0) {
-                uint256 user = epochs[starting_epoch + i][msg.sender];
-                epochs[starting_epoch + i][msg.sender] = 0;
-                mint_amount += (rewardOf(starting_epoch + i) * user) / total;
-            }
-        }
+    function claim(uint256 _starting_epoch, uint256 _num_epochs) external returns(uint256){
+        uint256 mint_amount = calculateMintAmount(_starting_epoch, _num_epochs, msg.sender);
         _mint(msg.sender, mint_amount);
         return mint_amount;
     }

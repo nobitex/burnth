@@ -58,50 +58,53 @@ contract Burnth is ERC20 {
      * - The root proof and all intermediate Merkle proofs must be valid.
      * - The last proof in the Merkle tree must be valid and correctly represent the encrypted state if applicable.
      *
-     * @param proof The private proof of burn containing all necessary cryptographic proofs and metadata.
+     * @param _proof The private proof of burn containing all necessary cryptographic proofs and metadata.
      */
-    function verify_proof(PrivateProofOfBurn calldata proof) internal {
+    function verify_proof(PrivateProofOfBurn calldata _proof) internal {
         require(
-            proof.header_prefix.length == 91,
+            _proof.header_prefix.length == 91,
             "Burnth: invalid header prefix length"
         );
 
-        require(!nullifiers[proof.nullifier], "Burnth: nullifier already used");
-        nullifiers[proof.nullifier] = true;
+        require(
+            !nullifiers[_proof.nullifier],
+            "Burnth: nullifier already used"
+        );
+        nullifiers[_proof.nullifier] = true;
 
         require(
             keccak256(
                 abi.encodePacked(
-                    proof.header_prefix,
-                    proof.state_root,
-                    proof.header_postfix
+                    _proof.header_prefix,
+                    _proof.state_root,
+                    _proof.header_postfix
                 )
-            ) == blockhash(proof.blockNumber),
+            ) == blockhash(_proof.blockNumber),
             "Burnth: invalid block hash"
         );
 
         require(
             mpt_middle_verifier.verifyProof(
-                proof.rootProof.a,
-                proof.rootProof.b,
-                proof.rootProof.c,
+                _proof.rootProof.a,
+                _proof.rootProof.b,
+                _proof.rootProof.c,
                 [
-                    uint256(bytes32(proof.state_root)) % FIELD_SIZE,
-                    proof.layers[proof.layers.length - 1]
+                    uint256(bytes32(_proof.state_root)) % FIELD_SIZE,
+                    _proof.layers[_proof.layers.length - 1]
                 ]
             ),
             "MptRootVerifier: invalid proof"
         );
 
-        uint256 layersLength = proof.layers.length - 1;
+        uint256 layersLength = _proof.layers.length - 1;
 
         for (uint256 i = 0; i < layersLength; i++) {
             require(
                 mpt_middle_verifier.verifyProof(
-                    proof.midProofs[i].a,
-                    proof.midProofs[i].b,
-                    proof.midProofs[i].c,
-                    [proof.layers[i + 1], proof.layers[i]]
+                    _proof.midProofs[i].a,
+                    _proof.midProofs[i].b,
+                    _proof.midProofs[i].c,
+                    [_proof.layers[i + 1], _proof.layers[i]]
                 ),
                 "MptMiddleVerifier: invalid proof"
             );
@@ -109,14 +112,14 @@ contract Burnth is ERC20 {
 
         require(
             mpt_last_verifier.verifyProof(
-                proof.lastProof.a,
-                proof.lastProof.b,
-                proof.lastProof.c,
+                _proof.lastProof.a,
+                _proof.lastProof.b,
+                _proof.lastProof.c,
                 [
-                    proof.layers[0],
-                    proof.coin,
-                    proof.nullifier,
-                    proof.isEncrypted ? 1 : 0
+                    _proof.layers[0],
+                    _proof.coin,
+                    _proof.nullifier,
+                    _proof.isEncrypted ? 1 : 0
                 ]
             ),
             "MptLastVerifier: invalid proof"
@@ -130,16 +133,16 @@ contract Burnth is ERC20 {
      * If the proof indicates the coin is encrypted, it marks the coin as valid and emits a `CoinGenerated` event.
      * Otherwise, it mints the token directly to the target address.
      *
-     * @param proof The private proof of burn containing all necessary cryptographic proofs and metadata.
+     * @param _proof The private proof of burn containing all necessary cryptographic proofs and metadata.
      */
-    function mint(PrivateProofOfBurn calldata proof) external {
-        verify_proof(proof);
+    function mint(PrivateProofOfBurn calldata _proof) external {
+        verify_proof(_proof);
 
-        if (proof.isEncrypted) {
-            coins[proof.coin] = true;
-            emit CoinGenerated(proof.target, proof.coin);
+        if (_proof.isEncrypted) {
+            coins[_proof.coin] = true;
+            emit CoinGenerated(_proof.target, _proof.coin);
         } else {
-            _mint(proof.target, proof.coin);
+            _mint(_proof.target, _proof.coin);
         }
     }
 
@@ -154,42 +157,42 @@ contract Burnth is ERC20 {
      * - Mints the withdrawn balance to the destination address.
      * - Emits `CoinSpent` and `CoinGenerated` events.
      *
-     * @param coin The coin to be spent.
-     * @param remainingCoin The remaining balance after spending the coin.
-     * @param withdrawnBalance The balance to be withdrawn and minted to the destination address.
-     * @param destination The address to which the withdrawn balance will be minted.
-     * @param proof The Groth16 proof verifying the spend operation.
+     * @param _coin The coin to be spent.
+     * @param _remainingCoin The remaining balance after spending the coin.
+     * @param _withdrawnBalance The balance to be withdrawn and minted to the destination address.
+     * @param _destination The address to which the withdrawn balance will be minted.
+     * @param _proof The Groth16 proof verifying the spend operation.
      */
     function spend(
-        uint256 coin,
-        uint256 remainingCoin,
-        uint256 withdrawnBalance,
-        address destination,
-        Groth16Proof calldata proof
+        uint256 _coin,
+        uint256 _remainingCoin,
+        uint256 _withdrawnBalance,
+        address _destination,
+        Groth16Proof calldata _proof
     ) external {
-        require(coins[coin], "Burnth: coin is not valid");
-        coins[coin] = false;
+        require(coins[_coin], "Burnth: coin is not valid");
+        coins[_coin] = false;
 
         require(
             spend_verifier.verifyProof(
-                proof.a,
-                proof.b,
-                proof.c,
-                [coin, remainingCoin, withdrawnBalance]
+                _proof.a,
+                _proof.b,
+                _proof.c,
+                [_coin, _remainingCoin, _withdrawnBalance]
             ),
             "SpendVerifier: invalid proof"
         );
 
-        coins[remainingCoin] = true;
-        _mint(destination, withdrawnBalance);
+        coins[_remainingCoin] = true;
+        _mint(_destination, _withdrawnBalance);
 
         emit CoinSpent(
             msg.sender,
-            coin,
-            remainingCoin,
-            withdrawnBalance,
-            destination
+            _coin,
+            _remainingCoin,
+            _withdrawnBalance,
+            _destination
         );
-        emit CoinGenerated(destination, remainingCoin);
+        emit CoinGenerated(_destination, _remainingCoin);
     }
 }
