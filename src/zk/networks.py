@@ -12,8 +12,8 @@ NETWORKS = {
     "sepolia": Network(
         "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
         11155111,
-        "0x98F5594BdE9d5D3c214457A232F527f8Ae0bafE4",
-        "0x905F36D7ab973C4eDf77cE4456b4f9b0099632cF",
+        "0x26Ef165784cf0F9f751b43225b7B20b3A6d371b1",
+        "0x0601E14CE71086e32F68593a016fFF4f798a199C",
     ),
     "ganache": Network(
         "http://127.0.0.1:8545",
