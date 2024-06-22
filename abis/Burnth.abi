@@ -108,7 +108,7 @@
     "name": "mint",
     "inputs": [
       {
-        "name": "proof",
+        "name": "_proof",
         "type": "tuple",
         "internalType": "struct Burnth.PrivateProofOfBurn",
         "components": [
@@ -266,27 +266,27 @@
     "name": "spend",
     "inputs": [
       {
-        "name": "coin",
+        "name": "_coin",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "remainingCoin",
+        "name": "_remainingCoin",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "withdrawnBalance",
+        "name": "_withdrawnBalance",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "destination",
+        "name": "_destination",
         "type": "address",
         "internalType": "address"
       },
       {
-        "name": "proof",
+        "name": "_proof",
         "type": "tuple",
         "internalType": "struct Burnth.Groth16Proof",
         "components": [
