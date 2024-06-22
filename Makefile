@@ -16,7 +16,7 @@ deploy:
 
 abi:
 	forge build --silent && jq '.abi' ./out/Burnth.sol/Burnth.json > abis/Burnth.abi
-	forge build --silent && jq '.abi' ./out/WormCash.sol/WormCash.json > abis/WormCash.
+	forge build --silent && jq '.abi' ./out/WormCash.sol/WormCash.json > abis/WormCash.abi
 
 delete_wallet:
 	rm -rf burnth.priv
