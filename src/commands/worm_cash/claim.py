@@ -24,12 +24,17 @@ def claim_cmd(network, context):
     contract = w3.eth.contract(address=network.wormcash_contract_addr, abi=ABI_WORMCASH)
     current_epoch = contract.functions.currentEpoch().call()
     print("currect epoch: ", current_epoch)
-    ans = input(f"Claiming WRM of {context.num_epochs} epochs. Are you sure? (Y/n): ")   
+    ans = input(f"Claiming WRM of {context.num_epochs} epochs. Are you sure? (Y/n): ")
 
     if ans.lower() == "y":
         address = w3.eth.account.from_key(context.priv_src).address
         nonce = w3.eth.get_transaction_count(address)
         gas_price = w3.eth.gas_price
+        mint_amount = contract.functions.calculateMintAmount(
+            context.starting_epoch, context.num_epochs, address
+        ).call()
+        if mint_amount == 0:
+            raise Exception("Your reward amount is: 0")
 
         claim_txn = contract.functions.claim(
             context.starting_epoch, context.num_epochs
