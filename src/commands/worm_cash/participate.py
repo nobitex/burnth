@@ -82,6 +82,10 @@ def participate_cmd(network, context):
         )
         print("Participate transaction ... ")
         sign_and_send_transaction(w3, participate_txn, context.priv_src)
-
+        current_epoch = wormcash_contract.functions.currentEpoch().call()
+        print(f"we are currently on the epoch number {current_epoch},")
+        print(
+            f"you can claim your reward after the epoch number {current_epoch + context.num_epochs}."
+        )
     except Exception as e:
         print(f"An error occurred: {e}")
