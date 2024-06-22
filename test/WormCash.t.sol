@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {WormCash} from "../src/WormCash.sol";
+import {WormCash} from "../src/contracts/WormCash.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract SimpleToken is IERC20 {

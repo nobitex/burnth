@@ -20,5 +20,7 @@ circuit/mpt_first_*
 circuit/mpt_path_*
 circuit/mpt_last_*
 
+chain
+
 Mpt*.sol
 SpendVerifier.sol

@@ -2,6 +2,8 @@ from web3 import Web3
 from zk.models import Wallet
 from zk.networks import Network
 
+from commands.utils import sign_and_send_transaction
+
 
 class BurnContext:
     amount: float
@@ -15,6 +17,7 @@ class BurnContext:
 def burn_cmd(network: Network, context: BurnContext):
     w3 = Web3(Web3.HTTPProvider(network.provider_url))
     wallet = Wallet.open_or_create()
+
     for i in range(10):
         burn_addr = wallet.derive_burn_addr(i).address
         balance = w3.eth.get_balance(burn_addr)
@@ -37,8 +40,4 @@ def burn_cmd(network: Network, context: BurnContext):
             "maxPriorityFeePerGas": gas_price // 2,
             "chainId": network.chain_id,
         }
-        signed = w3.eth.account.sign_transaction(transaction, context.priv_src)
-        tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-        print("Waiting for the receipt...")
-        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-        print("Receipt:", receipt)
+        sign_and_send_transaction(w3, transaction, context.priv_src)

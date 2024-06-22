@@ -26,7 +26,7 @@ def get_mpt_path_proof(salt, lower, upper, is_top):
             f,
         )
 
-    os.system("cd zk && make gen_mpt_path_witness && make gen_mpt_path_proof")
+    os.system("cd src/zk && make gen_mpt_path_witness && make gen_mpt_path_proof")
 
     proof = open("/tmp/mpt_path_proof.json", "r").read()
     proof = ast.literal_eval(proof)

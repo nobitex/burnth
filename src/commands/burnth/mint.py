@@ -4,7 +4,7 @@ from zk.networks import Network
 from zk.field import Field
 from zk.mimc7 import mimc7
 from zk.utils import get_block_splited_information, get_proof_of_burn
-
+from commands.utils import sign_and_send_transaction
 import json
 
 
@@ -84,18 +84,9 @@ def mint_cmd(network: Network, context: MintContext):
         }
     )
 
-    signed = w3.eth.account.sign_transaction(txn, context.priv_fee_payer)
-    tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
-
-    print("Waiting for the receipt...")
-    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-    print("Receipt:", receipt)
-
-    if receipt.status == 0:
-        raise Exception("Transaction failed!")
+    sign_and_send_transaction(w3, txn, context.priv_fee_payer)
 
     # TODO: if save failed, the coin will be lost. Need to fix this.
     if context.encrypted:
         wallet.add_coin(coin)
     wallet.save()
-    print("Minted successfully!")

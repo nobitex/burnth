@@ -20,39 +20,121 @@ Burnth is up on Sepolia testnet. You can burn some of your Sepolia ETH and give 
 
 The project uses Circom/SnarkJS as its ZK proving system, thus you'll need to have both `snarkjs` and `circom` installed on your system in order to generate proofs:
 
-```
+```bash
 sudo apt install npm
 sudo npm install -g snarkjs
 ```
 
 Here you can find the installation guide of circom: https://docs.circom.io/getting-started/installation/
 
-1. Clone the `burnth` repository, `cd` into it, and then perform a `make` to download the trusted-setup params:
+- Clone the `burnth` repository, `cd` into it, and then perform a `make` to download the trusted-setup params:
 
-    ```
+    ```bash
     git clone https://github.com/nobitex/burnth && cd burnth
     make
     ```
-2. You'll also need to have the some python package installed on your system:
+- You'll also need to have the some python package installed on your system:
 
     `sudo pip3 install -r requirements.txt`
 
-3. Burn your ETH:
+### Burnth 
 
-    `./burnth burn --priv-src [PRIVATE KEY OF THE SOURCE ACCOUNT] --amount [AMOUNT IN ETH]`
+To use burnth project you have 4 commands you can use: burn, mint, spend, info.
+and you can run the project on ganache or use our deployed sepolia contract.
+to run the project locally on your device run:
+```bash
+ganache
+# add one of the accounts private keys to Makefile
+```
+to deploy the burnth and wormcash smart contracts locally, run:
+```bash
+make deploy
+# the deployed addresses will automatically be added to networks file
+```
 
-    This will transfer your funds into a burn-address. The burn-address is the result of running the zk-friendly MiMC7 hash function on some preimage, that is derived for you given a random entropy saved in `burnth.priv`. (WARN: Losing this file makes you unable of minting your BURNTH!)
+### commands
 
-4. Check your burnt amounts:
+#### 1. Info:
+the info command is used to show you the detail of burnth wallet from including burnt addresses that will be used to mint the burnt ETH, the minted amount index that will be used to partially mint burnt eth, and to get the BURNTH balance.
 
-    `./burnth info`
 
-5. Mint your BURNTH:
+```bash
+python3 src/burnth info --network NETWORK
+```
 
-    `./burnth mint --priv-fee-payer [PRIVATE KEY OF THE ACCOUNT PAYING THE FEES FOR MINT TRANSACTION] --dst-addr [ACCOUNT TO RECEIVE THE ERC-20 TOKENS] --src-burn-addr [THE BURN-ADDRESS YOU WANT TO CONSUME]`
+#### 2. Burn:
+the burn command is used to burn a specific amount of ETH from the provided private key and creates a burn address that proves the burnt amount.
 
-    It's important to use a different account for paying the minting gas fees, otherwise, the burner's identity would be revealed.
-6. Congrats! Your BURNTH should now be in your wallet! Find it in your MetaMask wallet: the token contract address of BURNTH on Sepolia testnet is: `0x98F5594BdE9d5D3c214457A232F527f8Ae0bafE4`
+```bash
+python3 src/burnth burn --priv-src PRIVATE_KEY --amount AMOUNT --network NETWORK 
+```
+run the info command to get the burn address, for example :
+```
+Your burn-addresses:
+#1: 0x05c173E9Db4D04dd3C907A8C4D0f400437F7a86C (10 ETH)
+```
+
+#### 3. Mint:
+the mint command is used to mint the ETH amount related to a burnt address.
+to mint the total burnt amount run the mint command without --encrypted, but to mint the burnt amount partially add the --encrypted tag.
+
+```bash
+# total mint
+# the total burnt amount will be minted to the RECEIVER_ADDRESS after this command
+python3 src/burnth mint --priv-fee-payer PRIVATE_KEY --dst-addr RECEIVER_ADDRESS --src-burn-addr BURN_ADDRESS --network NETWORK
+
+# partial mint
+# to mint the burnt amount to the RECEIVER_ADDRESS you need to use the spend command
+python3 src/burnth mint --priv-fee-payer PRIVATE_KEY --dst-addr RECEIVER_ADDRESS --src-burn-addr BURN_ADDRESS --network NETWORK --encrypted
+```
+* the burn address list is accessible through info command, run the info command and if you used the encrypted tag the minted BURNTH is now added to your coins, for example:
+
+```
+Your burn-addresses:
+#1: 0x05c173E9Db4D04dd3C907A8C4D0f400437F7a86C (10 ETH)
+Your coins:
+[IDX: 1] Amount: 10 ETH | Salt: 9364906274990760141348533961953457098325637997490634627852333616901136153523
+
+```
+
+
+#### 4. spend:
+the spend command is used to mint a specific amount of burnt ETH to the provided RECEIVER_ADDRESS.
+
+```bash
+python3 src/burnth spend --priv-sender PRIVATE_KEY --dst-addr RECEIVER_ADDRESS --coin-index INDEX --amount PARTIAL_AMOUNT --network NETW0RK 
+
+```
+- the relative coin index is accessible through info command .
+
+### WormCash 
+
+To use wormcash project you have 3 commands you can use: participate, claim, info.
+keep in mind that you should already have BURNTH token in your account to able to interact with wormcash project.
+
+#### 1. Info:
+the info command is used to show your WRM balance.
+
+```bash
+python3 src/wormcash info --priv-src PRIVATE_KEY --network NETWORK
+```
+
+#### 2  . participate:
+the participate command is used to include you in the wormcash project, by running this command you will approve to send AMOUNT*NUMBER_EPOCH from your burnth tokens to the wormcash contract, after the epoch amounts is passed you can claim your reward.
+
+```bash
+python3 src/wormcash participate  --priv-src PRIVATE_KEY --amount-per-epoch AMOUNT --num-epochs NUMBER_EPOCH --network NETWORK
+
+```
+
+#### 2  . claim:
+the claim command is used to mint the reward WRM token to provided account.
+
+```bash
+python3 src/wormcash claim --priv-src PRIVATE_KEY --starting-epoch STARTING_EPOCH --num-epochs NUM_EPOCH --network NETWORK
+
+```
+- Now use the info command to check your wormcash balance.
 
 ## The circuit
 
@@ -68,6 +150,7 @@ Our Modified-Merkle-Patricia-Trie-Proof-Verifier consists of 3 R1CS circuits, as
 2. MPT-last circuit: There exists an an account within a layer $l_{last}$, with commitment $`h(l_i | s)`$ that it's public-key is MiMC7 of some preimage $p$ ($`MiMC7(p,p)`$). Nullifier is $`MiMC7(p,0)`$
 
 There is also an extra Spend circuit, allowing you to partially mint your burnt amounts, ***without exposing the remaining amounts!***
+to spend your coin you need to mint your coins with an extra --enctypted argument, then proceed to spend your encrypted coins.
 
 ***The parameter files are approximately 500MB and it takes around 1 minute to generate a single proof of burn.***
 

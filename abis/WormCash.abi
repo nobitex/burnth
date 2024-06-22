@@ -63,12 +63,12 @@
     "name": "approximate",
     "inputs": [
       {
-        "name": "amount_per_epoch",
+        "name": "_amount_per_epoch",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "num_epochs",
+        "name": "_num_epochs",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -103,20 +103,68 @@
   },
   {
     "type": "function",
-    "name": "claim",
+    "name": "burnth_contract",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IERC20"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "calculateMintAmount",
     "inputs": [
       {
-        "name": "starting_epoch",
+        "name": "_starting_epoch",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "num_epochs",
+        "name": "_num_epochs",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_user",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
-    "outputs": [],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "claim",
+    "inputs": [
+      {
+        "name": "_starting_epoch",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_num_epochs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable"
   },
   {
@@ -206,12 +254,12 @@
     "name": "participate",
     "inputs": [
       {
-        "name": "amount_per_epoch",
+        "name": "_amount_per_epoch",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "num_epochs",
+        "name": "_num_epochs",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -237,6 +285,19 @@
       }
     ],
     "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "starting_block",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",

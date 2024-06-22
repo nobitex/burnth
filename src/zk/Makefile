@@ -30,12 +30,12 @@ gen_mpt_path_witness:
 	mv circuit/output.json /tmp/output_mpt_path.json
 
 gen_mpt_path_proof:
-	cd circuit && ../../rapidsnark/package/bin/prover mpt_path_0001.zkey mpt_path_witness.wtns mpt_path_proof.json mpt_path_public.json
+	cd circuit && ../../../rapidsnark/package/bin/prover mpt_path_0001.zkey mpt_path_witness.wtns mpt_path_proof.json mpt_path_public.json
 	snarkjs generatecall circuit/mpt_path_public.json circuit/mpt_path_proof.json > /tmp/mpt_path_proof.json 
 
 gen_mpt_path_solidity: circuit/mpt_path_0001.zkey
-	cd circuit && snarkjs zkey export solidityverifier mpt_path_0001.zkey ../../src/MptMiddleVerifier.sol
-	sed -i 's/Groth16Verifier/MptMiddleVerifier/' ../src/MptMiddleVerifier.sol
+	cd circuit && snarkjs zkey export solidityverifier mpt_path_0001.zkey ../../src/contracts/utils/MptMiddleVerifier.sol
+	sed -i 's/Groth16Verifier/MptMiddleVerifier/' ../src/contracts/utils/MptMiddleVerifier.sol
 
 circuit/out/mpt_last_cpp/mpt_last: circuit/mpt_last.circom circuit/utils/*.circom
 ifeq ($(DEVELOPMENT), true)
@@ -62,12 +62,12 @@ gen_mpt_last_witness:
 	mv circuit/output.json /tmp/output_mpt_last.json
 
 gen_mpt_last_proof:
-	cd circuit && ../../rapidsnark/package/bin/prover mpt_last_0001.zkey mpt_last_witness.wtns mpt_last_proof.json mpt_last_public.json
+	cd circuit && ../../../rapidsnark/package/bin/prover mpt_last_0001.zkey mpt_last_witness.wtns mpt_last_proof.json mpt_last_public.json
 	snarkjs generatecall circuit/mpt_last_public.json circuit/mpt_last_proof.json > /tmp/mpt_last_proof.json 
 
 gen_mpt_last_solidity: circuit/mpt_last_0001.zkey
-	cd circuit && snarkjs zkey export solidityverifier mpt_last_0001.zkey ../../src/MptLastVerifier.sol
-	sed -i 's/Groth16Verifier/MptLastVerifier/' ../src/MptLastVerifier.sol
+	cd circuit && snarkjs zkey export solidityverifier mpt_last_0001.zkey ../../src/contracts/utils/MptLastVerifier.sol
+	sed -i 's/Groth16Verifier/MptLastVerifier/' ../src/contracts/utils/MptLastVerifier.sol
 
 circuit/out/spend_cpp/spend: circuit/spend.circom circuit/utils/*.circom
 ifeq ($(DEVELOPMENT), true)
@@ -94,17 +94,17 @@ gen_spend_witness: circuit/out/spend_cpp/spend
 	mv circuit/output.json /tmp/output_spend.json
 
 gen_spend_proof:
-	cd circuit && ../../rapidsnark/package/bin/prover spend_0001.zkey spend_witness.wtns spend_proof.json spend_public.json
+	cd circuit && ../../../rapidsnark/package/bin/prover spend_0001.zkey spend_witness.wtns spend_proof.json spend_public.json
 	snarkjs generatecall circuit/spend_public.json circuit/spend_proof.json > /tmp/spend_proof.json 
 
 gen_spend_solidity: circuit/spend_0001.zkey
-	cd circuit && snarkjs zkey export solidityverifier spend_0001.zkey ../../src/SpendVerifier.sol
-	sed -i 's/Groth16Verifier/SpendVerifier/' ../src/SpendVerifier.sol
+	cd circuit && snarkjs zkey export solidityverifier spend_0001.zkey ../../src/contracts/utils/SpendVerifier.sol
+	sed -i 's/Groth16Verifier/SpendVerifier/' ../src/contracts/utils/SpendVerifier.sol
 
 clean:
 	find . -type d -name '__pycache__' -exec rm -rf {} +
 	rm -rf circuit/out/*.r1cs circuit/out/*.wasm circuit/out/*.sym circuit/*.json circuit/out/*.wtns circuit/mpt_path_cpp/ circuit/out/mpt_path_js/ circuit/mpt_last_cpp/ circuit/out/mpt_last_js/ circuit/spend_cpp/ circuit/out/spend_js/
-	rm -rf ../src/MptMiddleVerifier.sol ../src/MptLastVerifier.sol ../src/SpendVerifier.sol
+	rm -rf ../src/contracts/utils
 
 clean_all: clean
 	rm -rf circuit/*.zkey circuit/out/*

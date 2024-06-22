@@ -17,7 +17,8 @@ def get_spend_proof(salt, balance, withdrawnBalance, remainingCoinSalt):
             f,
         )
 
-    os.system("cd zk && make gen_spend_witness && make gen_spend_proof")
+    os.system("cd src/zk && make gen_spend_witness && make gen_spend_proof")
+
 
     proof = open("/tmp/spend_proof.json", "r").read()
     proof = ast.literal_eval(proof)

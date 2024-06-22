@@ -38,7 +38,7 @@ def get_last_proof(
             f,
         )
 
-    os.system("cd zk && make gen_mpt_last_witness && make gen_mpt_last_proof")
+    os.system("cd src/zk && make gen_mpt_last_witness && make gen_mpt_last_proof")
 
     proof = open("/tmp/mpt_last_proof.json", "r").read()
     proof = ast.literal_eval(proof)

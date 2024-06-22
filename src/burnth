@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 import argparse
-
-from zk.networks import NETWORKS, DEFAULT_NETWORK
-from commands import (
+from zk.networks import NETWORKS
+from commands.burnth import (
     info_cmd,
     InfoContext,
     burn_cmd,
@@ -13,26 +12,35 @@ from commands import (
     SpendContext,
 )
 
-
-NETWORK = NETWORKS[DEFAULT_NETWORK]
 SYMBOL = "BURNTH"
 
-
+# Argument parser setup
 parser = argparse.ArgumentParser(
     prog="burnth",
     description="Mint and spend Burnth tokens!",
     epilog="By Nobitex Labs - https://labs.nobitex.ir",
 )
 
-subparsers = parser.add_subparsers(help="Burnth", dest="command", required=True)
+subparsers = parser.add_subparsers(
+    help="Burnth commands", dest="command", required=True
+)
 
+# Info command
 parser_info = subparsers.add_parser(
     "info", help="Information about your wallet!", allow_abbrev=False
 )
 parser_info.add_argument(
     "--priv-src", type=str, help="Private key to get balance.", required=False
 )
+parser_info.add_argument(
+    "--network",
+    type=str,
+    choices=NETWORKS.keys(),
+    help="Network to burn ETH on.",
+    required=True,
+)
 
+# Burn command
 parser_burn = subparsers.add_parser("burn", help="Burn ETH!", allow_abbrev=False)
 parser_burn.add_argument(
     "--priv-src", type=str, help="Private key of the source account.", required=True
@@ -40,7 +48,15 @@ parser_burn.add_argument(
 parser_burn.add_argument(
     "--amount", type=float, help="Amount to be burnt.", required=True
 )
+parser_burn.add_argument(
+    "--network",
+    type=str,
+    choices=NETWORKS.keys(),
+    help="Network to burn ETH on.",
+    required=True,
+)
 
+# Mint command
 parser_mint = subparsers.add_parser("mint", help=f"Mint {SYMBOL}!", allow_abbrev=False)
 parser_mint.add_argument(
     "--priv-fee-payer",
@@ -51,13 +67,13 @@ parser_mint.add_argument(
 parser_mint.add_argument(
     "--src-burn-addr",
     type=str,
-    help="Address of the source account containing burnth ETH.",
+    help="Address of the source account containing Burnth ETH.",
     required=True,
 )
 parser_mint.add_argument(
     "--dst-addr",
     type=str,
-    help="Address of the account receiving the {SYMBOL} tokens.",
+    help=f"Address of the account receiving the {SYMBOL} tokens.",
     required=True,
 )
 parser_mint.add_argument(
@@ -66,9 +82,17 @@ parser_mint.add_argument(
     help="Whether the balance is encrypted or not.",
     required=False,
 )
+parser_mint.add_argument(
+    "--network",
+    type=str,
+    choices=NETWORKS.keys(),
+    help="Network to burn ETH on.",
+    required=True,
+)
 
+# Spend command
 parser_spend = subparsers.add_parser(
-    "spend", help=f"spend {SYMBOL}!", allow_abbrev=False
+    "spend", help=f"Spend {SYMBOL}!", allow_abbrev=False
 )
 parser_spend.add_argument(
     "--priv-sender",
@@ -82,31 +106,34 @@ parser_spend.add_argument(
     help=f"Address of the account receiving the {SYMBOL} tokens.",
     required=True,
 )
+parser_spend.add_argument("--coin-index", type=int, help="Amount index.", required=True)
 parser_spend.add_argument(
-    "--coin-index", type=int, help=f"Amount index.", required=True
+    "--amount", type=float, help="Amount to be spent.", required=True
 )
 parser_spend.add_argument(
-    "--amount", type=float, help=f"Amount to be spent.", required=True
+    "--network",
+    type=str,
+    choices=NETWORKS.keys(),
+    help="Network to burn ETH on.",
+    required=True,
 )
 
-
+# Main function to execute commands
 if __name__ == "__main__":
     args = parser.parse_args()
+    NETWORK = NETWORKS[args.network]
 
     if args.command == "info":
         context = InfoContext(args.priv_src)
         info_cmd(NETWORK, context)
-
     elif args.command == "burn":
         context = BurnContext(args.amount, args.priv_src)
         burn_cmd(NETWORK, context)
-
     elif args.command == "mint":
         context = MintContext(
             args.src_burn_addr, args.dst_addr, args.encrypted, args.priv_fee_payer
         )
         mint_cmd(NETWORK, context)
-
     elif args.command == "spend":
         context = SpendContext(
             args.coin_index, args.amount, args.dst_addr, args.priv_sender
