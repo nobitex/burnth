@@ -156,6 +156,6 @@ to spend your coin you need to mint your coins with an extra --enctypted argumen
 
 ## License
 
-The project is licensed under GPL v3.
+The project is licensed under both GPL v3 and MIT.
 
 The keccak circuits are implemented by https://github.com/vocdoni and licensed under GPL v3. Check: https://github.com/vocdoni/keccak256-circom/blob/master/LICENSE
